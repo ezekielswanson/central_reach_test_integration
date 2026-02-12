@@ -1,0 +1,309 @@
+{
+  "contactId": 4708516,
+  "metadataFields": [
+    {
+      "fieldId": 126219,
+      "groupName": "Other",
+      "fieldName": "Previous Therapy History",
+      "description": "",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": false,
+      "sortOrder": 6,
+      "metadataDefinitionAndValue": {
+        "type": "TextArea"
+      }
+    },
+    {
+      "fieldId": 126214,
+      "groupName": "Other",
+      "fieldName": "Known Allergies",
+      "description": "",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 7,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 126210,
+      "groupName": "Other",
+      "fieldName": "Current Insurance",
+      "description": "",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 9,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 131316,
+      "groupName": "Other",
+      "fieldName": "Insurance ID ",
+      "description": "",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 10,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 126207,
+      "groupName": "Other",
+      "fieldName": "Behaviors of Concern",
+      "description": "",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 11,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 132303,
+      "groupName": "Other",
+      "fieldName": "Important Info",
+      "description": "needed info",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 13,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 131313,
+      "groupName": "Other",
+      "fieldName": "BT name ",
+      "description": "",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 16,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 132304,
+      "groupName": "Other",
+      "fieldName": "Work Schedule",
+      "description": "97153 Hrs scheduled weekly",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 18,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 126209,
+      "groupName": "Other",
+      "fieldName": "Client Availability",
+      "description": "hours child is available for service",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 19,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 134331,
+      "groupName": "Other",
+      "fieldName": "Total Assigned Hours (97153)",
+      "description": "hours assigned from the total auth approved hours",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 20,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 132431,
+      "groupName": "Other",
+      "fieldName": "Total Auth Hours Approved ",
+      "description": "Exact hours listed on client assessment ",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 21,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 134672,
+      "groupName": "Other",
+      "fieldName": "Auth Period",
+      "description": "start and end of auth",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 22,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 126220,
+      "groupName": "Other",
+      "fieldName": "Primary Care Physician",
+      "description": "",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": false,
+      "sortOrder": 26,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 126222,
+      "groupName": "Other",
+      "fieldName": "Referral Source",
+      "description": "",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": false,
+      "sortOrder": 27,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 131151,
+      "groupName": "Other",
+      "fieldName": "Referring Physician, Credentials & NPI ",
+      "description": "",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 29,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 131195,
+      "groupName": "Other",
+      "fieldName": "Date of Most Recent ASD Diagnosis ",
+      "description": "",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 30,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 131308,
+      "groupName": "Other",
+      "fieldName": "Supervising BCBA",
+      "description": "",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 31,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 131314,
+      "groupName": "Other",
+      "fieldName": "Intial Assessment BCBA",
+      "description": "",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 32,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 133826,
+      "groupName": "Other",
+      "fieldName": "Tier Level",
+      "description": "assigned level based on severity",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 34,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 136052,
+      "groupName": "Other",
+      "fieldName": "NB",
+      "description": "",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 35,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 137667,
+      "groupName": "Other",
+      "fieldName": "Policy Holder DOB",
+      "description": "",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 36,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 137697,
+      "groupName": "Other",
+      "fieldName": "Service Address",
+      "description": "",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 37,
+      "metadataDefinitionAndValue": {
+        "type": "TextArea",
+        "textAreaValue": "7809 Covington Pwky, Amarillo Texas\n"
+      }
+    },
+    {
+      "fieldId": 134446,
+      "groupName": "Credentialing",
+      "fieldName": "Credentialed with Medicaid CO",
+      "description": "Only applicable for CO providers ",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 3,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    }
+  ],
+  "result": "OK",
+  "failed": false,
+  "cachedTime": 0
+}

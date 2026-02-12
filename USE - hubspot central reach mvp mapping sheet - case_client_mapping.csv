@@ -1,0 +1,16 @@
+HubSpot Object,HubSpot Property Labels,HubSpot Internal Value,HubSpot Field Type,CentralReach Entity (DW2),CentralReach UI Field Label,CentralReach Internal Value,CentralReach Field Type,Transformation Rule,Direction,Conditional Flag
+Deal (Case),Client ID number,client_id_number,string,dw2.Contacts,Client ID,contactId,integer,,CR -> HS,This needs to be returned to HubSpot immediately after the contact record is created in CentralReach. 
+Deal (Case),Date of Birth,phi_date_of_birth,date picker,dw2.Contacts,DOB,dateOfBirth,datetime,"parse_date(phi_date_of_birth, ""MM-DD-YYYY"") → contact.dateOfBirth = toISO8601UTC(date, ""YYYY-MM-DDT00:00:00.000Z"")",HS -> CR,
+Deal (Case),Gender,phi_gender,"enumeration (male, female)",dw2.Contacts,Gender,gender,string,"map_enum(phi_gender) → contact.gender (normalize case; map MALE→Male, FEMALE→Female; else no-write/log)",HS -> CR,
+Deal (Case),First Name + Last Name,firsname + lastname,single line text,dw2.Contacts,Legal Name,contact.firstName + contact.lastName,string (composite),"concat(firstname, lastname) → Legal Name;",HS -> CR,
+Deal (Case),Guardian First Name + Guardian Last Name,guardian_first_name + guardian_last_name,single line text,dw2.Contacts,Guardian,contact.guardianFirstName + contact.guardianLastName,string (composite),"concat(phi_first_name__cloned_, phi_last_name) → Guardian; split(Guardian) → phi_first_name__cloned_, phi_last_name",HS -> CR,
+Deal (Case),Street Address,if_services_will_be_in_more_than_one_location__list_the_other_addres,single line text,dw2.Addresses,Address Line 1,,string,Transform (Concatenate/Split),HS -> CR,ADDR_WRITE_SYSTEM_IF_NO_OTHER_ADDRESS
+Deal (Case),"If services will be in more than one location, list the other address ",street_address,Multi-line text,dw2.Addresses,Service Address,fieldId: 137697,TextArea,,HS -> CR,ADDR_WRITE_SYSTEM_IF_NO_OTHER_ADDRESS
+Deal (Case),Home Apt,home_apt,string,dw2.Addresses,Address Line 2,addressLine2,string,,HS -> CR,ADDR_WRITE_SYSTEM_IF_NO_OTHER_ADDRESS
+Deal (Case),Location City,location_city,string,dw2.Addresses,City,city,string,,HS -> CR,ADDR_WRITE_SYSTEM_IF_NO_OTHER_ADDRESS
+Deal (Case),Location,location,TO BE DETERMINED,dw2.Addresses,State/Province,stateProvince,string,,HS -> CR,ADDR_WRITE_SYSTEM_IF_NO_OTHER_ADDRESS
+Deal (Case),Postal Code,postal_code,string,dw2.Addresses,Zip/Postal Code,zipPostalCode,string,,HS -> CR,ADDR_WRITE_SYSTEM_IF_NO_OTHER_ADDRESS
+Contact,Email,email,single-line text,dw2.Contacts,Primary Email,contact.primaryEmail,string,,HS -> CR,
+Contact,Phone,phone,single-line text,dw2.Contacts,Cell #,contact.phoneCell,string,"format_phone(phone) → ""(###) ###-####"" (digits-only; drop leading 1; else no-write/log)",HS -> CR,
+Deal (Case),Updated by integration,updated_by_integration,Boolean checkbox ,,,,,,,
+Deal (Case),Integration last write,integration_last_write,Date time picture,,,,,,,

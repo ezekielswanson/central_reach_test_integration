@@ -1,0 +1,47 @@
+{
+  "dealId": "54396540808",
+  "properties": [
+    {
+      "internalName": "dealstage",
+      "label": "Case Stage",
+      "type": "enumeration",
+      "groupName": "deal_activity",
+      "value": "1213733979"
+    },
+    {
+      "internalName": "hs_lastmodifieddate",
+      "label": "Last Modified Date",
+      "type": "datetime",
+      "groupName": "deal_activity",
+      "value": "2026-02-06T15:07:39.917Z"
+    },
+    {
+      "internalName": "pipeline",
+      "label": "Pipeline",
+      "type": "enumeration",
+      "groupName": "deal_activity",
+      "value": "default"
+    },
+    {
+      "internalName": "dealname",
+      "label": "Case Name",
+      "type": "string",
+      "groupName": "dealinformation",
+      "value": "MoSh"
+    },
+    {
+      "internalName": "createdate",
+      "label": "Create Date",
+      "type": "datetime",
+      "groupName": "dealinformation",
+      "value": "2026-01-23T15:42:25.464Z"
+    },
+    {
+      "internalName": "hs_object_id",
+      "label": "Record ID",
+      "type": "number",
+      "groupName": "dealinformation",
+      "value": "54396540808"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "contact": {
+    "contactId": 4708516,
+    "isActive": true,
+    "type": "client",
+    "title": "",
+    "firstName": "Optidge TEST - Zeke",
+    "middleInitial": "",
+    "lastName": "Swanson",
+    "chosenName": "",
+    "primaryEmail": "zeke@optidge.com",
+    "addressLine1": "Covington Parkway",
+    "addressLine2": "",
+    "city": "Amarillo",
+    "stateProvince": "TX",
+    "zipPostalCode": "79121",
+    "phoneHome": "",
+    "phoneCell": "8064333378",
+    "dateOfBirth": "1995-09-03T00:00:00.0000000Z",
+    "gender": "Male",
+    "guardianFirstName": "Don",
+    "guardianLastName": "Swanson",
+    "guarantorFirstName": "",
+    "guarantorLastName": "",
+    "clientDiagnosisCodes": [],
+    "additionalContacts": [],
+    "primaryPayors": [],
+    "secondaryPayors": []
+  },
+  "result": "OK",
+  "failed": false,
+  "cachedTime": 0
+}
