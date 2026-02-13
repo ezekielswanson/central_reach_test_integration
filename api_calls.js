@@ -6,6 +6,22 @@ const path = require('path');
 const TOKEN_URL = 'https://login.centralreach.com/connect/token';
 const API_BASE_URL = 'https://partners-api.centralreach.com/enterprise/v1';
 
+const CREATE_CLIENT_PAYLOAD = {
+  ContactForm: 'Public Client Intake Form',
+  FirstName: 'Optidge TEST V2 - Zeke',
+  LastName: 'Swanson',
+  DateOfBirth: '1995-09-03T00:00:00Z',
+  Gender: 'Male',
+  PrimaryEmail: 'zeke+123@optidge.com',
+  PhoneCell: '8064333378',
+  AddressLine1: '7809 Covington Pwky',
+  City: 'Amarillo',
+  StateProvince: 'TX',
+  ZipPostalCode: '79121',
+  GuardianFirstName: 'Don',
+  GuardianLastName: 'Swanson',
+};
+
 function decodeJwtPayload(token) {
   try {
     const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
@@ -102,6 +118,24 @@ async function fetchContactMetadata(contactId) {
   return response.data;
 }
 
+async function createClient(clientData) {
+  const accessToken = await getAccessToken();
+  const url = `${API_BASE_URL}/contacts/client`;
+  console.log('Creating client via POST:', url);
+
+  const response = await axios.post(url, clientData, {
+    headers: {
+      'x-api-key': process.env.CR_API_KEY,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  console.log('Client created successfully');
+  return response.data;
+}
+
 function writeToOutputFile(contactId, data, suffix = 'client') {
   const outputDir = path.join(__dirname, 'output_files');
   const filename = `${suffix}_${contactId}.json`;
@@ -116,17 +150,12 @@ function writeToOutputFile(contactId, data, suffix = 'client') {
 }
 
 async function main() {
-  const CONTACT_ID = 4708516;
-
   try {
     validateEnv();
-    const client = await fetchClient(CONTACT_ID);
-    console.log('Client fetched successfully:', JSON.stringify(client, null, 2));
-    writeToOutputFile(CONTACT_ID, client);
-
-    const metadata = await fetchContactMetadata(CONTACT_ID);
-    console.log('Metadata fetched successfully:', JSON.stringify(metadata, null, 2));
-    writeToOutputFile(CONTACT_ID, metadata, 'metadata');
+    const created = await createClient(CREATE_CLIENT_PAYLOAD);
+    console.log('Client created successfully:', JSON.stringify(created, null, 2));
+    const contactId = created?.contactId ?? created?.id ?? 'created';
+    writeToOutputFile(contactId, created);
   } catch (err) {
     if (axios.isAxiosError(err)) {
       const status = err.response?.status;
@@ -143,6 +172,8 @@ async function main() {
         console.log('Credentials: CR_CLIENT_ID + CR_CLIENT_SECRET valid (token obtained). CR_API_KEY valid (404 means request reached API, not auth failure).');
       } else if (status === 400) {
         console.error('400 Bad Request:', msg);
+      } else if (status === 409) {
+        console.error('409 Conflict: Record already exists. If updating, use update endpoint.');
       } else if (status === 500) {
         console.error('500 Internal Server Error: Review header, expired JWT, or request new token.');
       } else {
