@@ -1,0 +1,22 @@
+{
+  "startedAt": "2026-02-16T22:16:32.886Z",
+  "completedAt": "2026-02-16T22:16:33.222Z",
+  "dealIds": [
+    "56460899993"
+  ],
+  "runs": 1,
+  "runResults": [
+    {
+      "run": 1,
+      "startedAt": "2026-02-16T22:16:32.887Z",
+      "results": [
+        {
+          "dealId": "56460899993",
+          "status": "skipped",
+          "reason": "deal is not in Intake Complete stage"
+        }
+      ],
+      "completedAt": "2026-02-16T22:16:33.222Z"
+    }
+  ]
+}

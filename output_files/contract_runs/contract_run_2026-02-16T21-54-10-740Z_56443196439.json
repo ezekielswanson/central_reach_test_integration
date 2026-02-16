@@ -1,0 +1,84 @@
+{
+  "startedAt": "2026-02-16T21:54:09.428Z",
+  "completedAt": "2026-02-16T21:54:10.739Z",
+  "dealIds": [
+    "56443196439"
+  ],
+  "runs": 1,
+  "runResults": [
+    {
+      "run": 1,
+      "startedAt": "2026-02-16T21:54:09.429Z",
+      "results": [
+        {
+          "dealId": "56443196439",
+          "crContactId": "4716010",
+          "operation": "update",
+          "transformTrace": [
+            {
+              "rowNumber": 5,
+              "sourceKey": "hs_object_id",
+              "targetField": "ExternalSystemId"
+            },
+            {
+              "rowNumber": 6,
+              "sourceKey": "phi_date_of_birth",
+              "targetField": "DateOfBirth"
+            },
+            {
+              "rowNumber": 7,
+              "sourceKey": "phi_gender",
+              "targetField": "Gender"
+            },
+            {
+              "rowNumber": 8,
+              "sourceKey": "firsname + lastname",
+              "targetField": "FirstName"
+            },
+            {
+              "rowNumber": 8,
+              "sourceKey": "firsname + lastname",
+              "targetField": "LastName"
+            },
+            {
+              "rowNumber": 9,
+              "sourceKey": "guardian_first_name + guardian_last_name",
+              "targetField": "GuardianFirstName"
+            },
+            {
+              "rowNumber": 9,
+              "sourceKey": "guardian_first_name + guardian_last_name",
+              "targetField": "GuardianLastName"
+            },
+            {
+              "rowNumber": 11,
+              "sourceKey": "street_address",
+              "targetField": "AddressLine1"
+            },
+            {
+              "rowNumber": 13,
+              "sourceKey": "location_city",
+              "targetField": "City"
+            },
+            {
+              "rowNumber": 15,
+              "sourceKey": "postal_code",
+              "targetField": "ZipPostalCode"
+            },
+            {
+              "rowNumber": 16,
+              "sourceKey": "email",
+              "targetField": "PrimaryEmail"
+            },
+            {
+              "rowNumber": 17,
+              "sourceKey": "phone",
+              "targetField": "PhoneCell"
+            }
+          ]
+        }
+      ],
+      "completedAt": "2026-02-16T21:54:10.739Z"
+    }
+  ]
+}

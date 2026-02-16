@@ -1,4 +1,10 @@
 {
+  "name": "central_reach_test_integration",
+  "private": true,
+  "scripts": {
+    "contract:test": "node src/cli/contract-test-runner.js",
+    "contract:test:sample": "node src/cli/contract-test-runner.js --dealIds=REPLACE_DEAL_ID --runs=3"
+  },
   "dependencies": {
     "axios": "^1.13.5",
     "dotenv": "^17.2.4"

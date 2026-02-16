@@ -1,0 +1,74 @@
+{
+  "startedAt": "2026-02-16T22:18:08.368Z",
+  "completedAt": "2026-02-16T22:18:11.291Z",
+  "dealIds": [
+    "56460899993"
+  ],
+  "runs": 1,
+  "runResults": [
+    {
+      "run": 1,
+      "startedAt": "2026-02-16T22:18:08.383Z",
+      "results": [
+        {
+          "dealId": "56460899993",
+          "crContactId": "4716131",
+          "operation": "create",
+          "transformTrace": [
+            {
+              "rowNumber": 5,
+              "sourceKey": "hs_object_id",
+              "targetField": "ExternalSystemId"
+            },
+            {
+              "rowNumber": 6,
+              "sourceKey": "phi_date_of_birth",
+              "targetField": "DateOfBirth"
+            },
+            {
+              "rowNumber": 7,
+              "sourceKey": "phi_gender",
+              "targetField": "Gender"
+            },
+            {
+              "rowNumber": 8,
+              "sourceKey": "firsname + lastname",
+              "targetField": "FirstName"
+            },
+            {
+              "rowNumber": 8,
+              "sourceKey": "firsname + lastname",
+              "targetField": "LastName"
+            },
+            {
+              "rowNumber": 9,
+              "sourceKey": "guardian_first_name + guardian_last_name",
+              "targetField": "GuardianFirstName"
+            },
+            {
+              "rowNumber": 9,
+              "sourceKey": "guardian_first_name + guardian_last_name",
+              "targetField": "GuardianLastName"
+            },
+            {
+              "rowNumber": 13,
+              "sourceKey": "location_city",
+              "targetField": "City"
+            },
+            {
+              "rowNumber": 15,
+              "sourceKey": "postal_code",
+              "targetField": "ZipPostalCode"
+            },
+            {
+              "rowNumber": 16,
+              "sourceKey": "email",
+              "targetField": "PrimaryEmail"
+            }
+          ]
+        }
+      ],
+      "completedAt": "2026-02-16T22:18:11.291Z"
+    }
+  ]
+}
