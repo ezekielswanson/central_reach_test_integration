@@ -1,5 +1,8 @@
 HubSpot Object,HubSpot Property Labels,HubSpot Internal Value,HubSpot Field Type,CentralReach Entity (DW2),CentralReach UI Field Label,CentralReach Internal Value,CentralReach Field Type,Transformation Rule,Direction,Conditional Flag
+Deal (Case),Client Pipeline ,851341465,,,,,,,,
+Deal (Case),dealstage,1268817225,,,,,,,,
 Deal (Case),Client ID number,client_id_number,string,dw2.Contacts,Client ID,contactId,integer,,CR -> HS,This needs to be returned to HubSpot immediately after the contact record is created in CentralReach. 
+Deal (Case),Record Id,hs_object_id,number,dw2.Contacts,External System ID,externalSystemId,string,"CAST_TO_STRING(hubspot_record_id) → TRIM → REMOVE_NON_DIGITS(optional) → ENSURE_NO_DECIMALS/SCIENTIFIC_NOTATION → PREFIX_WITH(""hubspot:contact:"") → SET contact.externalSystemId",HS -> CR,
 Deal (Case),Date of Birth,phi_date_of_birth,date picker,dw2.Contacts,DOB,dateOfBirth,datetime,"parse_date(phi_date_of_birth, ""MM-DD-YYYY"") → contact.dateOfBirth = toISO8601UTC(date, ""YYYY-MM-DDT00:00:00.000Z"")",HS -> CR,
 Deal (Case),Gender,phi_gender,"enumeration (male, female)",dw2.Contacts,Gender,gender,string,"map_enum(phi_gender) → contact.gender (normalize case; map MALE→Male, FEMALE→Female; else no-write/log)",HS -> CR,
 Deal (Case),First Name + Last Name,firsname + lastname,single line text,dw2.Contacts,Legal Name,contact.firstName + contact.lastName,string (composite),"concat(firstname, lastname) → Legal Name;",HS -> CR,
@@ -14,3 +17,5 @@ Contact,Email,email,single-line text,dw2.Contacts,Primary Email,contact.primaryE
 Contact,Phone,phone,single-line text,dw2.Contacts,Cell #,contact.phoneCell,string,"format_phone(phone) → ""(###) ###-####"" (digits-only; drop leading 1; else no-write/log)",HS -> CR,
 Deal (Case),Updated by integration,updated_by_integration,Boolean checkbox ,,,,,,,
 Deal (Case),Integration last write,integration_last_write,Date time picture,,,,,,,
+Deal (Case),Client Pipeline ,851341465,,,,,,,,
+Deal (Case),dealstage,1268817225,,,,,,,,
