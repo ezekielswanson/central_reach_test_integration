@@ -4,6 +4,43 @@ const HUBSPOT_BASE_URL = "https://api.hubapi.com";
 const CR_TOKEN_URL = "https://login.centralreach.com/connect/token";
 const CR_BASE_URL = "https://partners-api.centralreach.com/enterprise/v1";
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetriableStatus(status) {
+  return status === 429 || (status >= 500 && status <= 599);
+}
+
+async function withRetry(fn, options = {}) {
+  const maxAttempts = options.maxAttempts || 4;
+  const baseDelayMs = options.baseDelayMs || 250;
+  const maxDelayMs = options.maxDelayMs || 5000;
+  const onRetry = options.onRetry;
+
+  let attempt = 0;
+  while (attempt < maxAttempts) {
+    attempt += 1;
+    try {
+      return await fn();
+    } catch (err) {
+      const status = err?.response?.status;
+      const shouldRetry = isRetriableStatus(status);
+      const isLastAttempt = attempt >= maxAttempts;
+      if (!shouldRetry || isLastAttempt) {
+        throw err;
+      }
+      const jitter = Math.floor(Math.random() * 150);
+      const delayMs = Math.min(baseDelayMs * 2 ** (attempt - 1) + jitter, maxDelayMs);
+      if (typeof onRetry === "function") {
+        onRetry({ attempt, status, delayMs });
+      }
+      await sleep(delayMs);
+    }
+  }
+  throw new Error("Retry loop exited unexpectedly.");
+}
+
 function safeLog(message, meta = {}) {
   console.log(JSON.stringify({ message, timestamp: new Date().toISOString(), ...meta }));
 }
@@ -52,6 +89,58 @@ function toCrClientPayload(payload) {
   };
 }
 
+function normalizeExistingContact(existingContact) {
+  if (!existingContact) {
+    return {};
+  }
+  return {
+    externalSystemId: existingContact.externalSystemId || null,
+    firstName: existingContact.firstName || null,
+    lastName: existingContact.lastName || null,
+    dateOfBirth: existingContact.dateOfBirth || null,
+    gender: existingContact.gender || null,
+    primaryEmail: existingContact.primaryEmail || null,
+    phoneCell: existingContact.phoneCell || null,
+    addressLine1: existingContact.addressLine1 || null,
+    addressLine2: existingContact.addressLine2 || null,
+    city: existingContact.city || null,
+    stateProvince: existingContact.stateProvince || null,
+    zipPostalCode: existingContact.zipPostalCode || null,
+    guardianFirstName: existingContact.guardianFirstName || null,
+    guardianLastName: existingContact.guardianLastName || null,
+  };
+}
+
+function toComparableShape(crPayload) {
+  return {
+    externalSystemId: crPayload.ExternalSystemId || null,
+    firstName: crPayload.FirstName || null,
+    lastName: crPayload.LastName || null,
+    dateOfBirth: crPayload.DateOfBirth || null,
+    gender: crPayload.Gender || null,
+    primaryEmail: crPayload.PrimaryEmail || null,
+    phoneCell: crPayload.PhoneCell || null,
+    addressLine1: crPayload.AddressLine1 || null,
+    addressLine2: crPayload.AddressLine2 || null,
+    city: crPayload.City || null,
+    stateProvince: crPayload.StateProvince || null,
+    zipPostalCode: crPayload.ZipPostalCode || null,
+    guardianFirstName: crPayload.GuardianFirstName || null,
+    guardianLastName: crPayload.GuardianLastName || null,
+  };
+}
+
+function stableStringify(value) {
+  if (value === null || typeof value !== "object") {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+  }
+  const keys = Object.keys(value).sort();
+  return `{${keys.map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(",")}}`;
+}
+
 function isValidEmail(value) {
   if (!value) {
     return false;
@@ -79,15 +168,22 @@ function toIsoMidnight(value) {
 }
 
 export async function getCrToken(auth) {
-  const response = await axios.post(
-    auth.cr_token_url || CR_TOKEN_URL,
-    new URLSearchParams({
-      grant_type: "client_credentials",
-      client_id: auth.cr_client_id,
-      client_secret: auth.cr_client_secret,
-      scope: "cr-api",
-    }).toString(),
-    { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+  const response = await withRetry(
+    async () =>
+      axios.post(
+        auth.cr_token_url || CR_TOKEN_URL,
+        new URLSearchParams({
+          grant_type: "client_credentials",
+          client_id: auth.cr_client_id,
+          client_secret: auth.cr_client_secret,
+          scope: "cr-api",
+        }).toString(),
+        { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+      ),
+    {
+      onRetry: ({ attempt, status, delayMs }) =>
+        safeLog("Retrying CR token request", { attempt, status: status || null, delayMs }),
+    }
   );
   return response.data.access_token;
 }
@@ -147,6 +243,18 @@ export async function upsertCrAndWriteback({
   payload,
 }) {
   try {
+    const requestWithRetry = async (fn, operation, meta = {}) =>
+      withRetry(fn, {
+        onRetry: ({ attempt, status, delayMs }) =>
+          safeLog("Retrying API call", {
+            operation,
+            attempt,
+            status: status || null,
+            delayMs,
+            ...meta,
+          }),
+      });
+
     const token = await getCrToken(crAuth);
     const headers = {
       "x-api-key": crAuth.cr_api_key,
@@ -155,68 +263,152 @@ export async function upsertCrAndWriteback({
       Authorization: `Bearer ${token}`,
     };
 
-    const hsDealResponse = await axios.get(`${HUBSPOT_BASE_URL}/crm/v3/objects/deals/${dealId}`, {
-      headers: { Authorization: `Bearer ${hubspotToken}` },
-      params: { properties: hsCrContactIdProperty },
-    });
+    const hsDealResponse = await requestWithRetry(
+      async () =>
+        axios.get(`${HUBSPOT_BASE_URL}/crm/v3/objects/deals/${dealId}`, {
+          headers: { Authorization: `Bearer ${hubspotToken}` },
+          params: { properties: hsCrContactIdProperty },
+        }),
+      "hubspot.getDeal",
+      { dealId: String(dealId) }
+    );
     const existingContactId = hsDealResponse.data?.properties?.[hsCrContactIdProperty];
+    const incomingHash = stableStringify(toComparableShape(payload));
 
     let operation = "create";
     let crContactId = null;
 
     if (existingContactId) {
-      await axios.put(
-        `${CR_BASE_URL}/contacts/client/${existingContactId}`,
-        toCrClientPayload(payload),
-        { headers }
-      );
-      operation = "update";
-      crContactId = String(existingContactId);
+      let existingByContact = null;
+      try {
+        const getByIdResponse = await requestWithRetry(
+          async () =>
+            axios.get(`${CR_BASE_URL}/contacts/client/${existingContactId}`, {
+              headers,
+            }),
+          "cr.getByContactId",
+          { dealId: String(dealId), contactId: String(existingContactId) }
+        );
+        existingByContact = getByIdResponse.data?.contact || getByIdResponse.data;
+      } catch (err) {
+        if (err?.response?.status !== 404) {
+          throw err;
+        }
+      }
+
+      if (existingByContact) {
+        const currentHash = stableStringify(normalizeExistingContact(existingByContact));
+        if (incomingHash === currentHash) {
+          operation = "noop";
+          crContactId = String(existingContactId);
+        }
+      }
+
+      if (operation !== "noop") {
+        await requestWithRetry(
+          async () =>
+            axios.put(
+              `${CR_BASE_URL}/contacts/client/${existingContactId}`,
+              toCrClientPayload(payload),
+              { headers }
+            ),
+          "cr.updateByContactId",
+          { dealId: String(dealId), contactId: String(existingContactId) }
+        );
+        operation = "update";
+        crContactId = String(existingContactId);
+      }
     } else {
       let existingByExternal = null;
       try {
-        const lookup = await axios.get(`${CR_BASE_URL}/contacts/client/byExternalSystemId`, {
-          headers,
-          params: { externalSystemId: payload.ExternalSystemId },
-        });
+        const lookup = await requestWithRetry(
+          async () =>
+            axios.get(`${CR_BASE_URL}/contacts/client/byExternalSystemId`, {
+              headers,
+              params: { externalSystemId: payload.ExternalSystemId },
+            }),
+          "cr.getByExternalSystemId",
+          { dealId: String(dealId), externalSystemId: payload.ExternalSystemId }
+        );
         existingByExternal = lookup.data?.contact || lookup.data;
       } catch (err) {
-        if (err.response?.status !== 404) throw err;
+        if (err?.response?.status !== 404) throw err;
       }
 
       if (existingByExternal?.contactId) {
-        await axios.put(
-          `${CR_BASE_URL}/contacts/client/${existingByExternal.contactId}`,
-          toCrClientPayload(payload),
-          { headers }
-        );
-        operation = "update";
-        crContactId = String(existingByExternal.contactId);
+        const currentHash = stableStringify(normalizeExistingContact(existingByExternal));
+        if (incomingHash === currentHash) {
+          operation = "noop";
+          crContactId = String(existingByExternal.contactId);
+        } else {
+          try {
+            await requestWithRetry(
+              async () =>
+                axios.put(`${CR_BASE_URL}/contacts/client/byExternalSystemId`, toCrClientPayload(payload), {
+                  headers,
+                  params: { externalSystemId: payload.ExternalSystemId },
+                }),
+              "cr.updateByExternalSystemId",
+              { dealId: String(dealId), externalSystemId: payload.ExternalSystemId }
+            );
+          } catch (err) {
+            safeLog("CR update by externalSystemId failed, fallback to contactId", {
+              dealId: String(dealId),
+              externalSystemId: payload.ExternalSystemId,
+              contactId: String(existingByExternal.contactId),
+              status: err?.response?.status || null,
+            });
+            await requestWithRetry(
+              async () =>
+                axios.put(
+                  `${CR_BASE_URL}/contacts/client/${existingByExternal.contactId}`,
+                  toCrClientPayload(payload),
+                  { headers }
+                ),
+              "cr.updateByContactIdFallback",
+              { dealId: String(dealId), contactId: String(existingByExternal.contactId) }
+            );
+          }
+          operation = "update";
+          crContactId = String(existingByExternal.contactId);
+        }
       } else {
-        const created = await axios.post(
-          `${CR_BASE_URL}/contacts/client`,
-          toCrClientPayload(payload),
-          { headers }
+        const created = await requestWithRetry(
+          async () =>
+            axios.post(`${CR_BASE_URL}/contacts/client`, toCrClientPayload(payload), { headers }),
+          "cr.createClient",
+          { dealId: String(dealId), externalSystemId: payload.ExternalSystemId }
         );
         crContactId = String(created.data?.contact?.contactId || created.data?.contactId || created.data?.id);
         operation = "create";
       }
     }
 
-    await axios.patch(
-      `${HUBSPOT_BASE_URL}/crm/v3/objects/deals/${dealId}`,
-      {
-        properties: {
-          [hsCrContactIdProperty]: String(crContactId),
-          updated_by_integration: true,
-          integration_last_write: new Date().toISOString(),
-        },
-      },
-      { headers: { Authorization: `Bearer ${hubspotToken}` } }
-    );
+    if (operation !== "noop") {
+      await requestWithRetry(
+        async () =>
+          axios.patch(
+            `${HUBSPOT_BASE_URL}/crm/v3/objects/deals/${dealId}`,
+            {
+              properties: {
+                [hsCrContactIdProperty]: String(crContactId),
+                updated_by_integration: true,
+                integration_last_write: new Date().toISOString(),
+              },
+            },
+            { headers: { Authorization: `Bearer ${hubspotToken}` } }
+          ),
+        "hubspot.writeBack",
+        { dealId: String(dealId), operation }
+      );
+    }
 
-    safeLog("HS->CR sync complete", { dealId: String(dealId), crContactId, operation });
-    return { crContactId, operation };
+    safeLog("HS->CR sync complete", {
+      dealId: String(dealId),
+      crContactId: String(crContactId),
+      operation,
+    });
+    return { crContactId: String(crContactId), operation };
   } catch (error) {
     safeLog("HS->CR sync failed", { dealId: String(dealId), ...toErrorMeta(error) });
     throw error;
