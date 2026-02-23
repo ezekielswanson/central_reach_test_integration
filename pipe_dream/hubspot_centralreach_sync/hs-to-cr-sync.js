@@ -1,8 +1,11 @@
 import axios from "axios";
+import { createHash } from "crypto";
 
 const HUBSPOT_BASE_URL = "https://api.hubapi.com";
 const CR_TOKEN_URL = "https://login.centralreach.com/connect/token";
 const CR_BASE_URL = "https://partners-api.centralreach.com/enterprise/v1";
+const CR_ACCESS_TOKEN_KEY = "cr:access_token";
+const PAYLOAD_HASH_TTL_SECONDS = 2592000;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -13,7 +16,8 @@ function isRetriableStatus(status) {
 }
 
 async function withRetry(fn, options = {}) {
-  const maxAttempts = options.maxAttempts || 4;
+  const maxRetries = Number.isInteger(options.maxRetries) ? options.maxRetries : 3;
+  const maxAttempts = maxRetries + 1;
   const baseDelayMs = options.baseDelayMs || 250;
   const maxDelayMs = options.maxDelayMs || 5000;
   const onRetry = options.onRetry;
@@ -47,9 +51,9 @@ function safeLog(message, meta = {}) {
 
 function toErrorMeta(error) {
   return {
-    errorMessage: error?.response?.data?.message || error?.message || "unknown_error",
-    errorCode: error?.code || error?.response?.status || "unknown",
+    errorCode: error?.code || "unknown",
     httpStatus: error?.response?.status || null,
+    errorName: error?.name || "Error",
   };
 }
 
@@ -89,28 +93,6 @@ function toCrClientPayload(payload) {
   };
 }
 
-function normalizeExistingContact(existingContact) {
-  if (!existingContact) {
-    return {};
-  }
-  return {
-    externalSystemId: existingContact.externalSystemId || null,
-    firstName: existingContact.firstName || null,
-    lastName: existingContact.lastName || null,
-    dateOfBirth: existingContact.dateOfBirth || null,
-    gender: existingContact.gender || null,
-    primaryEmail: existingContact.primaryEmail || null,
-    phoneCell: existingContact.phoneCell || null,
-    addressLine1: existingContact.addressLine1 || null,
-    addressLine2: existingContact.addressLine2 || null,
-    city: existingContact.city || null,
-    stateProvince: existingContact.stateProvince || null,
-    zipPostalCode: existingContact.zipPostalCode || null,
-    guardianFirstName: existingContact.guardianFirstName || null,
-    guardianLastName: existingContact.guardianLastName || null,
-  };
-}
-
 function toComparableShape(crPayload) {
   return {
     externalSystemId: crPayload.ExternalSystemId || null,
@@ -141,6 +123,10 @@ function stableStringify(value) {
   return `{${keys.map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(",")}}`;
 }
 
+function hashPayload(payload) {
+  return createHash("sha256").update(stableStringify(payload)).digest("hex");
+}
+
 function isValidEmail(value) {
   if (!value) {
     return false;
@@ -155,6 +141,22 @@ function mapGender(value) {
   return null;
 }
 
+function buildValidationError(dealId, missingFieldKeys) {
+  const err = new Error("missing_required_fields");
+  err.name = "PayloadValidationError";
+  err.details = { dealId: String(dealId), missingFieldKeys };
+  return err;
+}
+
+function validateRequiredCreateFields(payload, dealId) {
+  const missingFieldKeys = [];
+  if (!payload?.FirstName) missingFieldKeys.push("FirstName");
+  if (!payload?.LastName) missingFieldKeys.push("LastName");
+  if (missingFieldKeys.length > 0) {
+    throw buildValidationError(dealId, missingFieldKeys);
+  }
+}
+
 function toIsoMidnight(value) {
   if (!value) return null;
   const date = new Date(value);
@@ -167,7 +169,15 @@ function toIsoMidnight(value) {
   return null;
 }
 
-export async function getCrToken(auth) {
+export async function getCrToken(auth, dataStore) {
+  if (dataStore) {
+    const cached = await dataStore.get(CR_ACCESS_TOKEN_KEY);
+    const nowMs = Date.now();
+    if (cached?.token && Number(cached?.expiresAt) - nowMs > 60000) {
+      return cached.token;
+    }
+  }
+
   const response = await withRetry(
     async () =>
       axios.post(
@@ -185,7 +195,22 @@ export async function getCrToken(auth) {
         safeLog("Retrying CR token request", { attempt, status: status || null, delayMs }),
     }
   );
-  return response.data.access_token;
+  const token = response.data?.access_token;
+  const expiresIn = Number(response.data?.expires_in || 3600);
+  const expiresAt = Date.now() + expiresIn * 1000;
+
+  if (dataStore && token) {
+    await dataStore.set(
+      CR_ACCESS_TOKEN_KEY,
+      {
+        token,
+        expiresAt,
+      },
+      { ttl: Math.max(expiresIn - 60, 60) }
+    );
+  }
+
+  return token;
 }
 
 export async function fetchDealAndContact({ hubspotToken, dealId, mappingProperties }) {
@@ -226,18 +251,13 @@ export function transformToCrPayload({ deal, contact }) {
     GuardianLastName: dealProps.guardian_last_name,
   };
 
-  if (!payload.FirstName || !payload.LastName) {
-    const missingRequired = [];
-    if (!payload.FirstName) missingRequired.push("phi_first_name__cloned_");
-    if (!payload.LastName) missingRequired.push("phi_last_name");
-    throw new Error(`Missing required Deal field(s): ${missingRequired.join(", ")}`);
-  }
   return payload;
 }
 
 export async function upsertCrAndWriteback({
   hubspotToken,
   crAuth,
+  dataStore,
   dealId,
   hsCrContactIdProperty = "client_id_number",
   payload,
@@ -255,7 +275,7 @@ export async function upsertCrAndWriteback({
           }),
       });
 
-    const token = await getCrToken(crAuth);
+    const token = await getCrToken(crAuth, dataStore);
     const headers = {
       "x-api-key": crAuth.cr_api_key,
       "Content-Type": "application/json",
@@ -273,38 +293,19 @@ export async function upsertCrAndWriteback({
       { dealId: String(dealId) }
     );
     const existingContactId = hsDealResponse.data?.properties?.[hsCrContactIdProperty];
-    const incomingHash = stableStringify(toComparableShape(payload));
+    const incomingHash = hashPayload(toComparableShape(payload));
+    const payloadHashKey = `hs_cr:payload_hash:${String(dealId)}`;
+    const previousHashRecord = dataStore ? await dataStore.get(payloadHashKey) : null;
+    const hasSamePayloadHash = Boolean(existingContactId) && previousHashRecord?.hash === incomingHash;
 
     let operation = "create";
     let crContactId = null;
 
     if (existingContactId) {
-      let existingByContact = null;
-      try {
-        const getByIdResponse = await requestWithRetry(
-          async () =>
-            axios.get(`${CR_BASE_URL}/contacts/client/${existingContactId}`, {
-              headers,
-            }),
-          "cr.getByContactId",
-          { dealId: String(dealId), contactId: String(existingContactId) }
-        );
-        existingByContact = getByIdResponse.data?.contact || getByIdResponse.data;
-      } catch (err) {
-        if (err?.response?.status !== 404) {
-          throw err;
-        }
-      }
-
-      if (existingByContact) {
-        const currentHash = stableStringify(normalizeExistingContact(existingByContact));
-        if (incomingHash === currentHash) {
-          operation = "noop";
-          crContactId = String(existingContactId);
-        }
-      }
-
-      if (operation !== "noop") {
+      crContactId = String(existingContactId);
+      if (hasSamePayloadHash) {
+        operation = "noop";
+      } else {
         await requestWithRetry(
           async () =>
             axios.put(
@@ -316,62 +317,11 @@ export async function upsertCrAndWriteback({
           { dealId: String(dealId), contactId: String(existingContactId) }
         );
         operation = "update";
-        crContactId = String(existingContactId);
       }
     } else {
-      let existingByExternal = null;
-      try {
-        const lookup = await requestWithRetry(
-          async () =>
-            axios.get(`${CR_BASE_URL}/contacts/client/byExternalSystemId`, {
-              headers,
-              params: { externalSystemId: payload.ExternalSystemId },
-            }),
-          "cr.getByExternalSystemId",
-          { dealId: String(dealId), externalSystemId: payload.ExternalSystemId }
-        );
-        existingByExternal = lookup.data?.contact || lookup.data;
-      } catch (err) {
-        if (err?.response?.status !== 404) throw err;
-      }
-
-      if (existingByExternal?.contactId) {
-        const currentHash = stableStringify(normalizeExistingContact(existingByExternal));
-        if (incomingHash === currentHash) {
-          operation = "noop";
-          crContactId = String(existingByExternal.contactId);
-        } else {
-          try {
-            await requestWithRetry(
-              async () =>
-                axios.put(`${CR_BASE_URL}/contacts/client/byExternalSystemId`, toCrClientPayload(payload), {
-                  headers,
-                  params: { externalSystemId: payload.ExternalSystemId },
-                }),
-              "cr.updateByExternalSystemId",
-              { dealId: String(dealId), externalSystemId: payload.ExternalSystemId }
-            );
-          } catch (err) {
-            safeLog("CR update by externalSystemId failed, fallback to contactId", {
-              dealId: String(dealId),
-              externalSystemId: payload.ExternalSystemId,
-              contactId: String(existingByExternal.contactId),
-              status: err?.response?.status || null,
-            });
-            await requestWithRetry(
-              async () =>
-                axios.put(
-                  `${CR_BASE_URL}/contacts/client/${existingByExternal.contactId}`,
-                  toCrClientPayload(payload),
-                  { headers }
-                ),
-              "cr.updateByContactIdFallback",
-              { dealId: String(dealId), contactId: String(existingByExternal.contactId) }
-            );
-          }
-          operation = "update";
-          crContactId = String(existingByExternal.contactId);
-        }
+      validateRequiredCreateFields(payload, dealId);
+      if (hasSamePayloadHash) {
+        operation = "noop";
       } else {
         const created = await requestWithRetry(
           async () =>
@@ -403,14 +353,27 @@ export async function upsertCrAndWriteback({
       );
     }
 
+    if (dataStore && (operation === "create" || operation === "update")) {
+      await dataStore.set(
+        payloadHashKey,
+        {
+          dealId: String(dealId),
+          hash: incomingHash,
+          timestamp: new Date().toISOString(),
+        },
+        { ttl: PAYLOAD_HASH_TTL_SECONDS }
+      );
+    }
+
     safeLog("HS->CR sync complete", {
       dealId: String(dealId),
-      crContactId: String(crContactId),
+      crContactId: crContactId ? String(crContactId) : null,
       operation,
     });
-    return { crContactId: String(crContactId), operation };
+    return { crContactId: crContactId ? String(crContactId) : null, operation };
   } catch (error) {
-    safeLog("HS->CR sync failed", { dealId: String(dealId), ...toErrorMeta(error) });
+    const structured = error?.details || null;
+    safeLog("HS->CR sync failed", { dealId: String(dealId), ...toErrorMeta(error), structured });
     throw error;
   }
 }

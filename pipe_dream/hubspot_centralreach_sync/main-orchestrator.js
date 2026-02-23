@@ -1,9 +1,6 @@
-import axios from "axios";
-
 function toErrorMeta(error) {
   return {
-    errorMessage: error?.response?.data?.message || error?.message || "unknown_error",
-    errorCode: error?.code || error?.response?.status || "unknown",
+    errorCode: error?.code || "unknown",
     httpStatus: error?.response?.status || null,
   };
 }
@@ -17,59 +14,44 @@ function buildErrorLog({ workflow, stage, error }) {
   };
 }
 
-async function triggerWorkflow(url, name, dataStore) {
-  if (!url) return null;
-  const cycleId = `${name}_${Date.now()}`;
-  await axios.post(url, {
-    trigger_source: "hubspot-centralreach-main-orchestrator",
-    integration_cycle_id: cycleId,
-    timestamp: new Date().toISOString(),
-  });
-  await dataStore.set(
-    cycleId,
-    {
-      status: "initiated",
-      workflow: name,
-      started_at: new Date().toISOString(),
-    },
-    { ttl: 3600 }
-  );
-  return cycleId;
-}
+const NON_URGENT_LOCK_KEY = "hs_cr_lock:non_urgent";
+const NON_URGENT_LOCK_TTL_SECONDS = 600;
+const NON_URGENT_WATERMARK_KEY = "hs_cr:last_nonurgent_run_at";
 
 export default defineComponent({
-  name: "HubSpot-CentralReach Main Orchestrator",
-  description: "Runs every 5 minutes and triggers non-urgent workflows with lock protection.",
-  version: "0.1.0",
+  name: "HubSpot-CentralReach Non-Urgent Poller",
+  description: "Scheduled 5-minute non-urgent poller with lock and watermark.",
+  version: "0.2.0",
   props: {
     dataStore: { type: "data_store" },
-    intake_queue_workflow_url: { type: "string", optional: true },
-    non_urgent_workflow_url: { type: "string", optional: true },
     test_mode: { type: "boolean", default: false, optional: true },
   },
   async run({ $ }) {
-    const lock = await this.dataStore.get("hs_cr_integration_running");
-    if (lock?.status) {
-      return $.flow.exit("Integration is already running.");
+    const lock = await this.dataStore.get(NON_URGENT_LOCK_KEY);
+    if (lock) {
+      return $.flow.exit("Non-urgent poller already running.");
     }
 
-    await this.dataStore.set("hs_cr_integration_running", { status: true }, { ttl: 1800 });
+    await this.dataStore.set(
+      NON_URGENT_LOCK_KEY,
+      { lock: "non_urgent", timestamp: new Date().toISOString() },
+      { ttl: NON_URGENT_LOCK_TTL_SECONDS }
+    );
     try {
       if (this.test_mode) {
-        return $.flow.exit("Test mode enabled, no child workflow triggered.");
+        console.log(JSON.stringify({ message: "Non-urgent test mode run", timestamp: new Date().toISOString() }));
+        await this.dataStore.set(NON_URGENT_WATERMARK_KEY, new Date().toISOString());
+        return $.flow.exit("Test mode enabled.");
       }
 
-      const triggered = [];
-      const intakeCycle = await triggerWorkflow(this.intake_queue_workflow_url, "intake-queue", this.dataStore);
-      if (intakeCycle) triggered.push(intakeCycle);
-
-      const nonUrgentCycle = await triggerWorkflow(this.non_urgent_workflow_url, "non-urgent-sync", this.dataStore);
-      if (nonUrgentCycle) triggered.push(nonUrgentCycle);
+      console.log(JSON.stringify({ message: "Non-urgent cycle started", timestamp: new Date().toISOString() }));
+      // Placeholder for future non-urgent CR->HS authorization sync work.
+      console.log(JSON.stringify({ message: "Non-urgent cycle ended", timestamp: new Date().toISOString() }));
+      await this.dataStore.set(NON_URGENT_WATERMARK_KEY, new Date().toISOString());
 
       return {
         status: "ok",
-        triggeredCount: triggered.length,
-        cycleIds: triggered,
+        runner: "non-urgent-poller",
       };
     } catch (error) {
       const errorMeta = buildErrorLog({
@@ -85,7 +67,7 @@ export default defineComponent({
       );
       throw error;
     } finally {
-      await this.dataStore.set("hs_cr_integration_running", { status: false });
+      await this.dataStore.delete(NON_URGENT_LOCK_KEY);
     }
   },
 });

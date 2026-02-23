@@ -4,9 +4,12 @@ import { fetchDealAndContact, transformToCrPayload, upsertCrAndWriteback } from 
 const HUBSPOT_BASE_URL = "https://api.hubapi.com";
 const PIPELINE_ID = "851341465";
 const STAGE_ID = "1268817225";
+const INTAKE_LOCK_KEY = "hs_cr_lock:intake_queue";
+const INTAKE_LOCK_TTL_SECONDS = 300;
+const INTAKE_DEDUPE_TTL_SECONDS = 1800;
 
 function dedupeKey(dealId, hsLastModifiedDate) {
-  return `intake_processed:${dealId}:${hsLastModifiedDate}`;
+  return `hs_cr:intake_processed:${dealId}:${hsLastModifiedDate}`;
 }
 
 function shouldSync(candidate) {
@@ -17,8 +20,7 @@ function shouldSync(candidate) {
 
 function toErrorMeta(error) {
   return {
-    errorMessage: error?.response?.data?.message || error?.message || "unknown_error",
-    errorCode: error?.code || error?.response?.status || "unknown",
+    errorCode: error?.code || "unknown",
     httpStatus: error?.response?.status || null,
   };
 }
@@ -47,13 +49,16 @@ export default defineComponent({
     hs_cr_contact_id_property: { type: "string", default: "client_id_number" },
   },
   async run() {
-    const lockKey = "intake_queue_lock";
-    const lock = await this.dataStore.get(lockKey);
-    if (lock?.status) {
-      console.log("Lock already held, skipping run.");
+    const lock = await this.dataStore.get(INTAKE_LOCK_KEY);
+    if (lock) {
+      console.log(JSON.stringify({ message: "Intake poller skipped due to active lock", timestamp: new Date().toISOString() }));
       return { skipped: true, reason: "lock_exists" };
     }
-    await this.dataStore.set(lockKey, { status: true }, { ttl: 180 });
+    await this.dataStore.set(
+      INTAKE_LOCK_KEY,
+      { lock: "intake_queue", timestamp: new Date().toISOString() },
+      { ttl: INTAKE_LOCK_TTL_SECONDS }
+    );
 
     try {
       const searchResponse = await axios.post(
@@ -71,8 +76,6 @@ export default defineComponent({
             "hs_object_id",
             "hs_lastmodifieddate",
             "integration_last_write",
-            "pipeline",
-            "dealstage",
           ],
           sorts: [{ propertyName: "hs_lastmodifieddate", direction: "DESCENDING" }],
           limit: 50,
@@ -94,12 +97,22 @@ export default defineComponent({
 
         const dealId = candidate.id || candidate.properties?.hs_object_id;
         const lastModified = candidate.properties?.hs_lastmodifieddate;
+        if (!dealId || !lastModified) continue;
+
         const key = dedupeKey(dealId, lastModified);
         const alreadyProcessed = await this.dataStore.get(key);
-        if (alreadyProcessed?.status) continue;
+        if (alreadyProcessed) continue;
 
         try {
-          await this.dataStore.set(key, { status: true }, { ttl: 1800 });
+          await this.dataStore.set(
+            key,
+            {
+              dealId: String(dealId),
+              hs_lastmodifieddate: String(lastModified),
+              timestamp: new Date().toISOString(),
+            },
+            { ttl: INTAKE_DEDUPE_TTL_SECONDS }
+          );
           const mappingProperties = {
             deal: [
               "hs_object_id",
@@ -139,6 +152,7 @@ export default defineComponent({
               cr_client_secret: this.cr_client_secret,
               cr_api_key: this.cr_api_key,
             },
+            dataStore: this.dataStore,
             dealId,
             hsCrContactIdProperty: this.hs_cr_contact_id_property,
             payload,
@@ -158,7 +172,16 @@ export default defineComponent({
             dealId: String(dealId),
             hsLastModifiedDate: lastModified,
           });
-          console.error(JSON.stringify({ message: "Intake candidate sync failed", ...errorMeta }));
+          console.error(
+            JSON.stringify({
+              message: "Intake candidate sync failed",
+              timestamp: errorMeta.timestamp,
+              dealId: errorMeta.dealId,
+              hsLastModifiedDate: errorMeta.hsLastModifiedDate,
+              errorCode: errorMeta.errorCode,
+              httpStatus: errorMeta.httpStatus,
+            })
+          );
           await this.dataStore.set(`hs_cr_intake_last_error:${dealId}`, errorMeta, { ttl: 86400 });
           errors.push(errorMeta);
         }
@@ -174,13 +197,15 @@ export default defineComponent({
       console.error(
         JSON.stringify({
           message: "Intake queue poller failed",
-          ...errorMeta,
+          timestamp: errorMeta.timestamp,
+          errorCode: errorMeta.errorCode,
+          httpStatus: errorMeta.httpStatus,
         })
       );
       await this.dataStore.set("hs_cr_intake_queue_last_error", errorMeta, { ttl: 86400 });
       throw error;
     } finally {
-      await this.dataStore.set(lockKey, { status: false });
+      await this.dataStore.delete(INTAKE_LOCK_KEY);
     }
   },
 });
