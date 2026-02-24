@@ -182,6 +182,39 @@ function createCentralReachClient(config) {
     return response.data;
   }
 
+  async function getClientPayors(contactId) {
+    const response = await requestWithRetry(
+      async () =>
+        apiClient.get(`/contacts/clients/${contactId}/payors`, {
+          headers: await authHeaders(),
+        }),
+      { contactId, operation: "getClientPayors" }
+    );
+    return response.data;
+  }
+
+  async function getClientPayorById(contactId, payorId) {
+    const response = await requestWithRetry(
+      async () =>
+        apiClient.get(`/contacts/clients/${contactId}/payors/${payorId}`, {
+          headers: await authHeaders(),
+        }),
+      { contactId, payorId, operation: "getClientPayorById" }
+    );
+    return response.data;
+  }
+
+  async function getClientAuthorizations(contactId) {
+    const response = await requestWithRetry(
+      async () =>
+        apiClient.get(`/contacts/clients/${contactId}/authorizations`, {
+          headers: await authHeaders(),
+        }),
+      { contactId, operation: "getClientAuthorizations" }
+    );
+    return response.data;
+  }
+
   async function upsertCentralReachClient(dealContext, crPayload) {
     const externalSystemId = String(dealContext.dealId);
     const targetPayload = { ...crPayload, ExternalSystemId: externalSystemId };
@@ -254,6 +287,9 @@ function createCentralReachClient(config) {
     upsertCentralReachClient,
     getClientByExternalSystemId,
     getClientByContactId,
+    getClientPayors,
+    getClientPayorById,
+    getClientAuthorizations,
   };
 }
 

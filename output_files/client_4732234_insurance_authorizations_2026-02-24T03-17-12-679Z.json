@@ -1,0 +1,153 @@
+{
+  "contactId": "4732234",
+  "generatedAt": "2026-02-24T03:17:12.687Z",
+  "result": {
+    "raw": {
+      "clientPayors": {
+        "contactId": 4732234,
+        "payors": [
+          {
+            "payorId": 3819504,
+            "payorType": "PrimaryInsurance",
+            "companyName": "Aetna Behavioral Health",
+            "planName": "Aetna Behavioral Health",
+            "isShared": false,
+            "payorNickname": "Test #15 Insurance ",
+            "createdDate": "2026-02-24T02:24:11.0100000Z",
+            "updatedDate": "2026-02-24T02:24:11.0100000Z",
+            "coverageFrom": "2026-02-23T00:00:00.0000000Z",
+            "coverageTo": "2026-03-31T00:00:00.0000000Z",
+            "createdByContactId": 4467195,
+            "isDeleted": false
+          }
+        ],
+        "result": "OK",
+        "failed": false,
+        "cachedTime": 0
+      },
+      "clientAuthorizations": {
+        "contactId": 4732234,
+        "authorizations": [],
+        "result": "OK",
+        "failed": false,
+        "cachedTime": 0
+      },
+      "selectedPayorDetail": {
+        "contactId": 4732234,
+        "payorId": 3819504,
+        "payorType": 1,
+        "payorNickName": "Test #15 Insurance ",
+        "notes": "Test #15 insurance notes",
+        "createdDate": "2026-02-24T02:24:11.0100000Z",
+        "createdByContactId": 4467195,
+        "updatedDate": "2026-02-24T02:24:11.0100000Z",
+        "isDeleted": false,
+        "isShared": false,
+        "insurance": {
+          "companyName": "Aetna Behavioral Health",
+          "planName": "Aetna Behavioral Health",
+          "coverageFrom": "2026-02-23T00:00:00.0000000Z",
+          "coverageTo": "2026-03-31T00:00:00.0000000Z",
+          "copayType": "$",
+          "copayAmount": 20,
+          "copayFrequency": "monthly",
+          "status": 1,
+          "insuranceContactPhone": "8064333378",
+          "insuranceContactPerson": "8064333378",
+          "groupNumber": "8028484",
+          "groupName": "Test 15",
+          "subscriberInfo": {
+            "birthDate": "1995-09-03T00:00:00.0000000Z",
+            "gender": "Male",
+            "ssn": "848392348",
+            "subscriberId": "200029393",
+            "firstName": "SwansonDon Test #15",
+            "middleInitial": "",
+            "lastName": "Swanson",
+            "address": "7809 Covington Pwky ",
+            "addressLine2": "",
+            "city": "Amarillo",
+            "state": "TX",
+            "zip": "79121"
+          },
+          "patientInfo": {
+            "relationType": "Child",
+            "birthDate": "1948-03-26T00:00:00.0000000Z",
+            "gender": "Male",
+            "subscriberId": "200029393",
+            "firstName": "Zeke Optidge Test #15",
+            "middleInitial": "",
+            "lastName": "Swanson Test #15",
+            "address": "7809 Covington Pwky",
+            "addressLine2": "",
+            "city": "Amarillo",
+            "state": "TX",
+            "zip": "79121"
+          }
+        },
+        "result": "OK",
+        "failed": false,
+        "cachedTime": 0
+      }
+    },
+    "normalized": {
+      "payorMeta": {
+        "selectedPayorId": "3819504",
+        "isActive": true,
+        "selectionReason": "first_available_insurance"
+      },
+      "slots": {
+        "overview": {
+          "payorType": 1,
+          "nickname": null,
+          "notes": "Test #15 insurance notes",
+          "linkedFile": null
+        },
+        "insurance": {
+          "payor": "Aetna Behavioral Health",
+          "plan": "Aetna Behavioral Health",
+          "payorResponsibility": null,
+          "coPayType": null,
+          "coPayAmount": null,
+          "coPayFrequency": null,
+          "coverageStartDate": "2026-02-23T00:00:00.0000000Z",
+          "coverageEndDate": "2026-03-31T00:00:00.0000000Z",
+          "insuranceContactPhone": null,
+          "insuranceContactPerson": null,
+          "status": "current_insurance"
+        },
+        "subscriber": {
+          "firstName": null,
+          "middleInitial": null,
+          "lastName": null,
+          "birthDate": null,
+          "gender": null,
+          "ssn": null,
+          "policyNumber": null,
+          "groupName": null,
+          "insuredId": null,
+          "address": null,
+          "addressLine2": null,
+          "city": null,
+          "state": null,
+          "zip": null
+        },
+        "patient": {
+          "firstName": null,
+          "middleInitial": null,
+          "lastName": null,
+          "relationType": null,
+          "insuredId": null,
+          "gender": null,
+          "birthDate": null,
+          "address": null,
+          "addressLine2": null,
+          "city": null,
+          "state": null,
+          "zip": null
+        }
+      },
+      "authorizations": []
+    }
+  }
+}
