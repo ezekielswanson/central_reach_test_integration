@@ -53,6 +53,108 @@ function extractAuthorizationList(raw) {
   return [];
 }
 
+function extractAcceptedInsuranceCompanies(raw) {
+  if (Array.isArray(raw)) return raw;
+  const collections = [raw?.acceptedInsurances, raw?.resource, raw?.items, raw?.data];
+  for (const collection of collections) {
+    if (Array.isArray(collection)) return collection;
+  }
+  return [];
+}
+
+function normalizeForMatch(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function flattenAcceptedInsurancePlans(raw) {
+  return extractAcceptedInsuranceCompanies(raw).flatMap((company) => {
+    const plans = asArray(company?.plans || company?.insurancePlans);
+    return plans.map((plan) => ({
+      companyId: pickFirst(company, ["companyId", "id", "payorId"]),
+      companyName: pickFirst(company, ["companyName", "name"]),
+      planId: pickFirst(plan, ["planId", "insurancePlanId", "id"]),
+      planName: pickFirst(plan, ["planName", "name"]),
+      insurancePlanId: pickFirst(plan, ["insurancePlanId", "planId", "id"]),
+    }));
+  });
+}
+
+function resolveAcceptedInsuranceIdsForPayor(payor, acceptedInsurancesRaw) {
+  if (!payor) {
+    return {
+      resolvedCompanyId: null,
+      resolvedPlanId: null,
+      matchType: "no_payor",
+      warnings: ["no_payor_selected"],
+    };
+  }
+
+  const insurance = payor?.insurance || {};
+  const payorCompanyName =
+    pickFirst(insurance, ["companyName", "insuranceCompanyName"]) ||
+    pickFirst(payor, ["companyName", "insuranceCompanyName", "payorName"]);
+  const payorPlanName =
+    pickFirst(insurance, ["planName", "insurancePlanName", "planNickname"]) ||
+    pickFirst(payor, ["planName", "insurancePlanName", "planNickname"]);
+  const plans = flattenAcceptedInsurancePlans(acceptedInsurancesRaw);
+
+  const targetCompany = normalizeForMatch(payorCompanyName);
+  const targetPlan = normalizeForMatch(payorPlanName);
+  const matchedPlans = plans.filter(
+    (plan) =>
+      normalizeForMatch(plan.companyName) === targetCompany &&
+      normalizeForMatch(plan.planName) === targetPlan
+  );
+
+  if (matchedPlans.length === 1) {
+    return {
+      payorCompanyName,
+      payorPlanName,
+      resolvedCompanyId: matchedPlans[0].companyId || null,
+      resolvedPlanId: matchedPlans[0].planId || matchedPlans[0].insurancePlanId || null,
+      matchType: "exact_company_and_plan",
+      warnings: [],
+    };
+  }
+
+  if (matchedPlans.length > 1) {
+    return {
+      payorCompanyName,
+      payorPlanName,
+      resolvedCompanyId: matchedPlans[0].companyId || null,
+      resolvedPlanId: matchedPlans[0].planId || matchedPlans[0].insurancePlanId || null,
+      matchType: "ambiguous_multiple_matches",
+      warnings: ["multiple_accepted_insurance_matches_found"],
+    };
+  }
+
+  const companyOnlyMatches = plans.filter(
+    (plan) => normalizeForMatch(plan.companyName) === targetCompany
+  );
+  if (companyOnlyMatches.length === 1) {
+    return {
+      payorCompanyName,
+      payorPlanName,
+      resolvedCompanyId: companyOnlyMatches[0].companyId || null,
+      resolvedPlanId: companyOnlyMatches[0].planId || companyOnlyMatches[0].insurancePlanId || null,
+      matchType: "company_only_single_plan",
+      warnings: ["plan_name_not_exactly_matched"],
+    };
+  }
+
+  return {
+    payorCompanyName,
+    payorPlanName,
+    resolvedCompanyId: null,
+    resolvedPlanId: null,
+    matchType: "no_match",
+    warnings: ["no_accepted_insurance_match_found"],
+  };
+}
+
 function toPayorId(payor) {
   return String(
     pickFirst(payor, ["payorId", "id", "resourceId", "contactPayorId", "insuranceId"]) || ""
@@ -313,9 +415,10 @@ function createHsToCrSync(config) {
       throw new Error("contactId is required to retrieve insurance and authorizations.");
     }
 
-    const [clientPayors, clientAuthorizations] = await Promise.all([
+    const [clientPayors, clientAuthorizations, acceptedInsurances] = await Promise.all([
       centralReach.getClientPayors(normalizedContactId),
       centralReach.getClientAuthorizations(normalizedContactId),
+      centralReach.getAcceptedInsurances(),
     ]);
 
     const payors = extractPayorList(clientPayors);
@@ -345,12 +448,21 @@ function createHsToCrSync(config) {
     const normalizedSlots = buildInsuranceScreenSlots(
       detailCandidate && typeof detailCandidate === "object" ? { ...selectedPayor, ...detailCandidate } : selectedPayor
     );
+    const selectedPayorForResolution =
+      detailCandidate && typeof detailCandidate === "object"
+        ? { ...selectedPayor, ...detailCandidate }
+        : selectedPayor;
+    const acceptedInsuranceResolution = resolveAcceptedInsuranceIdsForPayor(
+      selectedPayorForResolution,
+      acceptedInsurances
+    );
 
     return {
       raw: {
         clientPayors,
         clientAuthorizations,
         selectedPayorDetail,
+        acceptedInsurances,
       },
       normalized: {
         payorMeta: {
@@ -360,6 +472,7 @@ function createHsToCrSync(config) {
         },
         slots: normalizedSlots,
         authorizations: normalizeAuthorizations(clientAuthorizations),
+        acceptedInsuranceIds: acceptedInsuranceResolution,
       },
     };
   }
