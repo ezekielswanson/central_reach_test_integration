@@ -1,0 +1,169 @@
+{
+  "generatedAt": "2026-02-27T06:17:39.550Z",
+  "endpoint": "GET /payors/accepted-insurances",
+  "data": {
+    "acceptedInsurances": [
+      {
+        "companyId": 1968,
+        "companyName": "Private",
+        "planId": 2165,
+        "planName": "Invoice",
+        "addressLine1": "",
+        "city": "",
+        "stateProvince": "",
+        "zipPostalCode": "",
+        "officeAllyGatewayId": "PRIV"
+      },
+      {
+        "companyId": 6942,
+        "companyName": "Colorado Medicaid",
+        "planId": 6943,
+        "planName": "Fee For Service",
+        "addressLine1": "PO Box 30",
+        "city": "Denver",
+        "stateProvince": "CO",
+        "zipPostalCode": "80201-0030",
+        "officeAllyGatewayId": "MCCOB"
+      },
+      {
+        "companyId": 10080,
+        "companyName": "Cigna Colorado",
+        "planId": 10091,
+        "planName": "Standard",
+        "addressLine1": "PO Box 188061",
+        "city": "Chattanooga",
+        "stateProvince": "TN",
+        "zipPostalCode": "37422-8061",
+        "officeAllyGatewayId": "62308",
+        "zirMedGatewayId": "62308",
+        "changeHealthcareGatewayId": "6405"
+      },
+      {
+        "companyId": 10232,
+        "companyName": "Aetna Colorado",
+        "planId": 10235,
+        "planName": "Standard",
+        "addressLine1": "4582 S Ulster St Ste 900",
+        "city": "Denver",
+        "stateProvince": "CO",
+        "zipPostalCode": "80237",
+        "officeAllyGatewayId": "60054",
+        "zirMedGatewayId": "60054",
+        "changeHealthcareGatewayId": "6400"
+      },
+      {
+        "companyId": 24869,
+        "companyName": "Evernorth Behavioral Health",
+        "planId": 31425,
+        "planName": "Standard2",
+        "addressLine1": "6625 West 78th Street, Suite 100",
+        "city": "Bloomington",
+        "stateProvince": "MN",
+        "zipPostalCode": "55439",
+        "zirMedGatewayId": "62308",
+        "changeHealthcareGatewayId": "1841"
+      },
+      {
+        "companyId": 31523,
+        "companyName": "Medicaid NY",
+        "planId": 31524,
+        "planName": "Medicaid",
+        "addressLine1": "PO Box 4601",
+        "city": "Rensselaer",
+        "stateProvince": "NY",
+        "zipPostalCode": "12144",
+        "officeAllyGatewayId": "MCDNY",
+        "zirMedGatewayId": "SKNY1",
+        "changeHealthcareGatewayId": "1422"
+      },
+      {
+        "companyId": 3746,
+        "companyName": "Aetna Behavioral Health",
+        "planId": 43168,
+        "planName": "Aetna Behavioral Health",
+        "addressLine1": "PO BOX 818047",
+        "city": "Cleveland ",
+        "stateProvince": "OH",
+        "zipPostalCode": "44181",
+        "officeAllyGatewayId": "60054",
+        "zirMedGatewayId": "60054"
+      },
+      {
+        "companyId": 43302,
+        "companyName": "Anthem BCBS - New York",
+        "planId": 43303,
+        "planName": "Anthem BCBS NY",
+        "addressLine1": "PO Box 24078",
+        "city": "Newark",
+        "stateProvince": "NJ",
+        "zipPostalCode": "07101",
+        "officeAllyGatewayId": "22099"
+      },
+      {
+        "companyId": 47816,
+        "companyName": "Emblem Behavioral Health",
+        "planId": 47817,
+        "planName": "PPO",
+        "addressLine1": "PO Box 1850",
+        "city": "Hicksville",
+        "stateProvince": "NY",
+        "zipPostalCode": "11802",
+        "officeAllyGatewayId": "13551",
+        "changeHealthcareGatewayId": "2744"
+      },
+      {
+        "companyId": 50200,
+        "companyName": "Optum (UHC)",
+        "planId": 50201,
+        "planName": "Optum (UHC)",
+        "addressLine1": "PO Box 30757",
+        "city": "Salt Lake City",
+        "stateProvince": "UT",
+        "zipPostalCode": "84130",
+        "officeAllyGatewayId": "87726",
+        "zirMedGatewayId": "87726",
+        "changeHealthcareGatewayId": "3429"
+      },
+      {
+        "companyId": 33868,
+        "companyName": "BCBS Empire NY",
+        "planId": 51217,
+        "planName": "PPO 2",
+        "addressLine1": "PO Box 1407",
+        "city": "New York",
+        "stateProvince": "NY",
+        "zipPostalCode": "10008",
+        "zirMedGatewayId": "SB803"
+      },
+      {
+        "companyId": 51808,
+        "companyName": "NYCE PPO Plan",
+        "planId": 51809,
+        "planName": "NYCE PPO Plan",
+        "officeAllyGatewayId": "26992",
+        "changeHealthcareGatewayId": "3783"
+      },
+      {
+        "companyId": 51587,
+        "companyName": "Anthem BCBS NY",
+        "planId": 51956,
+        "planName": "Anthem BCBS NY",
+        "addressLine1": "PO Box 24078",
+        "city": "Newark",
+        "stateProvince": "NY",
+        "zipPostalCode": "07101",
+        "zirMedGatewayId": "SB803"
+      },
+      {
+        "companyId": 52173,
+        "companyName": "NYCEPPO",
+        "planId": 52174,
+        "planName": "NYCE PPO PLAN",
+        "zirMedGatewayId": "26992"
+      }
+    ],
+    "result": "OK",
+    "failed": false,
+    "cachedTime": 0
+  }
+}

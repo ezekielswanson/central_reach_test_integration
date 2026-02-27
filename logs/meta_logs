@@ -1,0 +1,32 @@
+
+{"message":"hs_to_cr_push starting","timestamp":"2026-02-27T06:01:58.284Z","totalQueued":1,"processingNow":1}
+
+2/27/2026, 12:01:58 AM
+{"message":"DEBUG_HS_TO_CR_SNAPSHOT","timestamp":"2026-02-27T06:01:58.398Z","dealId":"57136484520","hubspot_inputs":{"insurance_primary":"Aetna","insurance_1__other__summary":null,"insurance_id_1":"94983920","insurance_id_2":null,"insurance_id_3":null,"insurance_id_4":null,"number_of_insurance_s_":"1"}}
+
+2/27/2026, 12:01:59 AM
+{"message":"DEBUG_HASH_CHECK","timestamp":"2026-02-27T06:01:58.684Z","dealId":"57136484520","existingContactId":"4742806","hasSamePayloadHash":true,"incomingHash":"154e67d3ce3ec6465cf02cdc47af636ca88671fcfaf31572294f25c1a67ad526","previousHash":"154e67d3ce3ec6465cf02cdc47af636ca88671fcfaf31572294f25c1a67ad526"}
+
+2/27/2026, 12:01:59 AM
+{"message":"META_PUT_REQUEST","timestamp":"2026-02-27T06:01:58.816Z","contactId":"4742806","fieldId":126210,"valuePreview":"Aetna"}
+
+2/27/2026, 12:01:59 AM
+{"message":"META_PUT_RESPONSE","timestamp":"2026-02-27T06:01:58.909Z","contactId":"4742806","fieldId":126210,"httpStatus":200}
+
+2/27/2026, 12:01:59 AM
+{"message":"META_PUT_REQUEST","timestamp":"2026-02-27T06:01:58.909Z","contactId":"4742806","fieldId":131316,"valuePreview":"94983920"}
+
+2/27/2026, 12:01:59 AM
+{"message":"META_PUT_RESPONSE","timestamp":"2026-02-27T06:01:58.994Z","contactId":"4742806","fieldId":131316,"httpStatus":200}
+
+2/27/2026, 12:01:59 AM
+{"message":"META_PUT_COMPLETE","timestamp":"2026-02-27T06:01:58.994Z","dealId":"57136484520","crContactId":"4742806","results":[{"fieldId":126210,"operation":"updated"},{"fieldId":131316,"operation":"updated"}]}
+
+2/27/2026, 12:01:59 AM
+{"message":"HS->CR sync complete","timestamp":"2026-02-27T06:01:58.994Z","dealId":"57136484520","crContactId":"4742806","operation":"noop"}
+
+2/27/2026, 12:01:59 AM
+{"message":"Skipping payor upsert: missing insurance.planId (PlanId required for this payor type)","timestamp":"2026-02-27T06:01:59.012Z","contactId":"4742806","slotIndex":1,"companyName":"Aetna","planName":"Aetna","resolutionReason":"no_plans_on_company"}
+
+2/27/2026, 12:01:59 AM
+{"message":"hs_to_cr_push complete","timestamp":"2026-02-27T06:01:59.012Z","processedCount":1,"errorCount":0}
