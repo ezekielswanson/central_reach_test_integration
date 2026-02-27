@@ -215,6 +215,17 @@ function createCentralReachClient(config) {
     return response.data;
   }
 
+  async function getAcceptedInsurances() {
+    const response = await requestWithRetry(
+      async () =>
+        apiClient.get("/payors/accepted-insurances", {
+          headers: await authHeaders(),
+        }),
+      { operation: "getAcceptedInsurances" }
+    );
+    return response.data;
+  }
+
   async function upsertCentralReachClient(dealContext, crPayload) {
     const externalSystemId = String(dealContext.dealId);
     const targetPayload = { ...crPayload, ExternalSystemId: externalSystemId };
@@ -290,6 +301,7 @@ function createCentralReachClient(config) {
     getClientPayors,
     getClientPayorById,
     getClientAuthorizations,
+    getAcceptedInsurances,
   };
 }
 
