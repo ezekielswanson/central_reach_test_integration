@@ -15,12 +15,32 @@ const CR_ACCEPTED_INSURANCES_CACHE_KEY = "cr:accepted_insurances:v1";
 const CR_ACCEPTED_INSURANCES_TTL_SECONDS = 86400; // 24h
 
 // CR Client Metadata Field IDs (from your UI)
-const CR_META_FIELD_CURRENT_INSURANCE_ID = 126210;
-const CR_META_FIELD_INSURANCE_ID = 131316;
-const CR_METADATA_FIELD_TYPES = {
-  [CR_META_FIELD_CURRENT_INSURANCE_ID]: "Input",
-  [CR_META_FIELD_INSURANCE_ID]: "Input",
+const CR_META_FIELDS = {
+  ALLERGIES: 126214,
+  MALADAPTIVE_BEHAVIORS: 126207,
+  COMORBID_DIAGNOSIS: 132303,
+  BT_1_NAME: 131313,
+  WORK_SCHEDULE_1: 132304,
+  WORK_SCHEDULE_2: 138093,
+  CLIENT_AVAILABILITY: 126209,
+  TOTAL_ASSIGNED_HOURS: 134331,
+  APPROVED_AUTH_HOURS: 132431,
+  AUTH_PERIOD: 134672,
+  PHYSICIAN_CREDENTIALS: 131151,
+  ASD_DIAGNOSIS_DATE: 131195,
+  SUPERVISING_BCBA: 131308,
+  INITIAL_ASSESSMENT_BCBA: 131314,
+  SEVERITY_LEVEL: 133826,
+  POLICY_HOLDER_NAME: 138090,
+  POLICY_HOLDER_DOB: 137667,
+  CURRENT_INSURANCE: 126210,
+  INSURANCE_ID: 131316,
 };
+
+const CR_METADATA_FIELD_TYPES = Object.values(CR_META_FIELDS).reduce((acc, fieldId) => {
+  acc[fieldId] = "Input";
+  return acc;
+}, {});
 
 // -------------------------
 // Helpers: retry / sleep
@@ -297,10 +317,87 @@ function getInsuranceIdForMetaField(dealProps, slotIndex) {
   return s ? s : null;
 }
 
-function getInsuranceMetaValues(dealProps) {
-  const currentInsurance = getCurrentInsuranceMetaValue(dealProps);
-  const insuranceId = getInsuranceIdForMetaField(dealProps, 1); // your rule: insurance_id_1
-  return { currentInsurance, insuranceId };
+function toMetadataDate(value) {
+  const iso = hsDateToIsoOrNull(value);
+  if (!iso) return null;
+
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  const yyyy = String(d.getUTCFullYear());
+  return `${mm}/${dd}/${yyyy}`;
+}
+
+function toTrimmedOrNull(value) {
+  if (value === undefined || value === null) return null;
+  const s = String(value).trim();
+  return s || null;
+}
+
+function joinMetadataParts(parts) {
+  const clean = parts.map((p) => toTrimmedOrNull(p)).filter(Boolean);
+  return clean.length ? clean.join(", ") : null;
+}
+
+function getPhysicianCredentialsByInsuranceType(dealProps) {
+  const insuranceType = toTrimmedOrNull(dealProps.n1_what_type_of_insurance)?.toLowerCase();
+
+  if (insuranceType === "medicaid ffs") {
+    return joinMetadataParts([dealProps.physician_name, dealProps.npi_number]);
+  }
+
+  if (insuranceType === "commercial enrolled" || insuranceType === "commercial oon") {
+    return joinMetadataParts([dealProps.physician_name__commercial, dealProps.npi_number__commercial]);
+  }
+
+  return null;
+}
+
+function getAsdDiagnosisDateByInsuranceType(dealProps) {
+  const insuranceType = toTrimmedOrNull(dealProps.n1_what_type_of_insurance)?.toLowerCase();
+
+  if (insuranceType === "medicaid ffs") {
+    return toMetadataDate(dealProps.most_recent_asd_diagnosis_date_medicaid);
+  }
+
+  if (insuranceType === "commercial enrolled" || insuranceType === "commercial oon") {
+    return toMetadataDate(dealProps.most_recent_asd_diagnosis_date_1);
+  }
+
+  return null;
+}
+
+function getAuthPeriodValue(dealProps) {
+  const start = toMetadataDate(dealProps.auth_start_date);
+  const end = toMetadataDate(dealProps.auth_end_date);
+
+  if (start && end) return `${start} - ${end}`;
+  return start || end || null;
+}
+
+function getExtendedMetadataValues(dealProps) {
+  return {
+    [CR_META_FIELDS.ALLERGIES]: toTrimmedOrNull(dealProps.allergies),
+    [CR_META_FIELDS.MALADAPTIVE_BEHAVIORS]: toTrimmedOrNull(dealProps.maladaptive_behaviors__clinical),
+    [CR_META_FIELDS.COMORBID_DIAGNOSIS]: toTrimmedOrNull(dealProps.comorbid_diagnosis__clinical),
+    [CR_META_FIELDS.BT_1_NAME]: toTrimmedOrNull(dealProps.current_primary_bt),
+    [CR_META_FIELDS.WORK_SCHEDULE_1]: toTrimmedOrNull(dealProps.bt_work_schedule_confirmed),
+    [CR_META_FIELDS.WORK_SCHEDULE_2]: toTrimmedOrNull(dealProps.bt_work_schedule_2_confirmed),
+    [CR_META_FIELDS.CLIENT_AVAILABILITY]: toTrimmedOrNull(dealProps.client_availability_completed),
+    [CR_META_FIELDS.TOTAL_ASSIGNED_HOURS]: toTrimmedOrNull(dealProps.assigned_hours),
+    [CR_META_FIELDS.APPROVED_AUTH_HOURS]: toTrimmedOrNull(dealProps.authorized_hours),
+    [CR_META_FIELDS.AUTH_PERIOD]: getAuthPeriodValue(dealProps),
+    [CR_META_FIELDS.PHYSICIAN_CREDENTIALS]: getPhysicianCredentialsByInsuranceType(dealProps),
+    [CR_META_FIELDS.ASD_DIAGNOSIS_DATE]: getAsdDiagnosisDateByInsuranceType(dealProps),
+    [CR_META_FIELDS.SUPERVISING_BCBA]: toTrimmedOrNull(dealProps.supervising_bcba),
+    [CR_META_FIELDS.INITIAL_ASSESSMENT_BCBA]: toTrimmedOrNull(dealProps.initial_assessment_bcba),
+    [CR_META_FIELDS.SEVERITY_LEVEL]: toTrimmedOrNull(dealProps.severity_level_clinical),
+    [CR_META_FIELDS.POLICY_HOLDER_NAME]: toTrimmedOrNull(dealProps.policy_holder_name),
+    [CR_META_FIELDS.POLICY_HOLDER_DOB]: toMetadataDate(dealProps.phi__policy_holder_dob),
+    [CR_META_FIELDS.CURRENT_INSURANCE]: getCurrentInsuranceMetaValue(dealProps),
+    [CR_META_FIELDS.INSURANCE_ID]: getInsuranceIdForMetaField(dealProps, 1),
+  };
 }
 
 function getMetadataPutBody(fieldId, value) {
@@ -1207,6 +1304,32 @@ async function upsertCrAndWriteback({
           headers: { Authorization: `Bearer ${hubspotToken}`, Accept: "application/json" },
           params: {
             properties: [
+              "allergies",
+              "maladaptive_behaviors__clinical",
+              "comorbid_diagnosis__clinical",
+              "current_primary_bt",
+              "bt_work_schedule_confirmed",
+              "bt_work_schedule_2_confirmed",
+              "client_availability_completed",
+              "assigned_hours",
+              "authorized_hours",
+              "auth_start_date",
+              "auth_end_date",
+              "physician_name",
+              "npi_number",
+              "physician_name__commercial",
+              "npi_number__commercial",
+              "most_recent_asd_diagnosis_date_medicaid",
+              "most_recent_asd_diagnosis_date_1",
+              "supervising_bcba",
+              "initial_assessment_bcba",
+              "policy_holder_name",
+              "phi__policy_holder_dob",
+              "severity_level_clinical",
+              "n1_what_type_of_insurance",
+              "n2_what_type_of_insurance",
+              "n3_what_type_of_insurance",
+              "n4_what_type_of_insurance",
               "insurance_primary",
               "insurance_1__other__summary",
               "insurance_id_1",
@@ -1222,42 +1345,30 @@ async function upsertCrAndWriteback({
     );
 
     const dealPropsMeta = hsDealMeta?.data?.properties || {};
-    const { currentInsurance, insuranceId } = getInsuranceMetaValues(dealPropsMeta);
+    const metadataValues = getExtendedMetadataValues(dealPropsMeta);
 
     const metaResults = [];
-    const currentInsurancePut = await updateContactMetadataField({
-      headers,
-      contactId: crContactId,
-      fieldId: CR_META_FIELD_CURRENT_INSURANCE_ID,
-      value: currentInsurance,
-      requestWithRetry,
-    });
-    if (currentInsurancePut.operation === "updated") {
-      currentInsurancePut.verification = await verifyContactMetadataField({
+    for (const [fieldId, value] of Object.entries(metadataValues)) {
+      const normalizedFieldId = Number(fieldId);
+      const putResult = await updateContactMetadataField({
         headers,
         contactId: crContactId,
-        fieldId: CR_META_FIELD_CURRENT_INSURANCE_ID,
+        fieldId: normalizedFieldId,
+        value,
         requestWithRetry,
       });
-    }
-    metaResults.push(currentInsurancePut);
 
-    const insuranceIdPut = await updateContactMetadataField({
-      headers,
-      contactId: crContactId,
-      fieldId: CR_META_FIELD_INSURANCE_ID,
-      value: insuranceId,
-      requestWithRetry,
-    });
-    if (insuranceIdPut.operation === "updated") {
-      insuranceIdPut.verification = await verifyContactMetadataField({
-        headers,
-        contactId: crContactId,
-        fieldId: CR_META_FIELD_INSURANCE_ID,
-        requestWithRetry,
-      });
+      if (putResult.operation === "updated") {
+        putResult.verification = await verifyContactMetadataField({
+          headers,
+          contactId: crContactId,
+          fieldId: normalizedFieldId,
+          requestWithRetry,
+        });
+      }
+
+      metaResults.push(putResult);
     }
-    metaResults.push(insuranceIdPut);
 
     safeLog("META_PUT_COMPLETE", {
       dealId: String(dealId),

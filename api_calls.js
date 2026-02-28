@@ -3,6 +3,9 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
+const { loadConfig } = require('./src/config');
+const { createCentralReachClient } = require('./src/clients/centralreach-client');
+
 const TOKEN_URL = 'https://login.centralreach.com/connect/token';
 const API_BASE_URL = 'https://partners-api.centralreach.com/enterprise/v1';
 
@@ -152,6 +155,16 @@ function writeToOutputFile(contactId, data, suffix = 'client') {
 async function main() {
   try {
     validateEnv();
+
+    const metadataContactId = process.argv[2] === 'metadata' ? process.argv[3] : null;
+    if (metadataContactId) {
+      const config = loadConfig();
+      const cr = createCentralReachClient(config.centralReach);
+      const data = await cr.getContactMetadata(metadataContactId);
+      writeToOutputFile(metadataContactId, data, 'usemetadata');
+      return;
+    }
+
     const created = await createClient(CREATE_CLIENT_PAYLOAD);
     console.log('Client created successfully:', JSON.stringify(created, null, 2));
     const contactId = created?.contactId ?? created?.id ?? 'created';

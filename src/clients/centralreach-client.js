@@ -226,6 +226,17 @@ function createCentralReachClient(config) {
     return response.data;
   }
 
+  async function getContactMetadata(contactId) {
+    const response = await requestWithRetry(
+      async () =>
+        apiClient.get(`/contacts/${contactId}/metadata`, {
+          headers: await authHeaders(),
+        }),
+      { contactId, operation: "getContactMetadata" }
+    );
+    return response.data;
+  }
+
   async function upsertCentralReachClient(dealContext, crPayload) {
     const externalSystemId = String(dealContext.dealId);
     const targetPayload = { ...crPayload, ExternalSystemId: externalSystemId };
@@ -302,6 +313,7 @@ function createCentralReachClient(config) {
     getClientPayorById,
     getClientAuthorizations,
     getAcceptedInsurances,
+    getContactMetadata,
   };
 }
 

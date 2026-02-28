@@ -1,0 +1,387 @@
+{
+  "contactId": 4742731,
+  "metadataFields": [
+    {
+      "fieldId": 126219,
+      "groupName": "Other",
+      "fieldName": "Previous Therapy History",
+      "description": "",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": false,
+      "sortOrder": 6,
+      "metadataDefinitionAndValue": {
+        "type": "TextArea"
+      }
+    },
+    {
+      "fieldId": 126214,
+      "groupName": "Other",
+      "fieldName": "Known Allergies",
+      "description": "",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 7,
+      "metadataDefinitionAndValue": {
+        "type": "Input",
+        "inputValue": "No"
+      }
+    },
+    {
+      "fieldId": 126210,
+      "groupName": "Other",
+      "fieldName": "Current Insurance",
+      "description": "",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4147071,
+      "lastUpdatedByName": "Gavriella Bohan",
+      "displayOnFacesheet": true,
+      "sortOrder": 9,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 131316,
+      "groupName": "Other",
+      "fieldName": "Insurance ID ",
+      "description": "",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 10,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 126207,
+      "groupName": "Other",
+      "fieldName": "Maladaptive Behaviors",
+      "description": "",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 11,
+      "metadataDefinitionAndValue": {
+        "type": "Input",
+        "inputValue": "Test"
+      }
+    },
+    {
+      "fieldId": 132303,
+      "groupName": "Other",
+      "fieldName": "Comorbid Diagnosis",
+      "description": "needed info",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 13,
+      "metadataDefinitionAndValue": {
+        "type": "Input",
+        "inputValue": "Test"
+      }
+    },
+    {
+      "fieldId": 131313,
+      "groupName": "Other",
+      "fieldName": "BT #1 name ",
+      "description": "",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 16,
+      "metadataDefinitionAndValue": {
+        "type": "Input",
+        "inputValue": "Test Zeke Swanson 1"
+      }
+    },
+    {
+      "fieldId": 138092,
+      "groupName": "Other",
+      "fieldName": "BT #2 Name",
+      "description": "if there are two BT's on the case",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 17,
+      "metadataDefinitionAndValue": {
+        "type": "Input",
+        "inputValue": "Test Zeke Swanson 2"
+      }
+    },
+    {
+      "fieldId": 132304,
+      "groupName": "Other",
+      "fieldName": "Work Schedule #1",
+      "description": "97153 Hrs scheduled weekly",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 19,
+      "metadataDefinitionAndValue": {
+        "type": "Input",
+        "inputValue": "Confirmed"
+      }
+    },
+    {
+      "fieldId": 138093,
+      "groupName": "Other",
+      "fieldName": "Work Schedule #2",
+      "description": "",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 20,
+      "metadataDefinitionAndValue": {
+        "type": "Input",
+        "inputValue": "Confirmed"
+      }
+    },
+    {
+      "fieldId": 126209,
+      "groupName": "Other",
+      "fieldName": "Client Availability",
+      "description": "hours child is available for service",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 21,
+      "metadataDefinitionAndValue": {
+        "type": "Input",
+        "inputValue": "Confirmed (Yes)"
+      }
+    },
+    {
+      "fieldId": 134331,
+      "groupName": "Other",
+      "fieldName": "Total Assigned Hours (97153)",
+      "description": "hours assigned from the total auth approved hours",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 22,
+      "metadataDefinitionAndValue": {
+        "type": "Input",
+        "inputValue": "30"
+      }
+    },
+    {
+      "fieldId": 132431,
+      "groupName": "Other",
+      "fieldName": "Approved Auth Hours ",
+      "description": "Exact hours listed on client assessment ",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 23,
+      "metadataDefinitionAndValue": {
+        "type": "Input",
+        "inputValue": "30"
+      }
+    },
+    {
+      "fieldId": 134672,
+      "groupName": "Other",
+      "fieldName": "Auth Period",
+      "description": "start and end of auth",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 24,
+      "metadataDefinitionAndValue": {
+        "type": "Input",
+        "inputValue": "09/03/2027 - 10/11/2030"
+      }
+    },
+    {
+      "fieldId": 126220,
+      "groupName": "Other",
+      "fieldName": "Primary Care Physician",
+      "description": "",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": false,
+      "sortOrder": 30,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 126222,
+      "groupName": "Other",
+      "fieldName": "Referral Source",
+      "description": "",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": false,
+      "sortOrder": 31,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 131151,
+      "groupName": "Other",
+      "fieldName": "Referring Physician, Credentials & NPI ",
+      "description": "",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 33,
+      "metadataDefinitionAndValue": {
+        "type": "Input",
+        "inputValue": "ZALDUONDO ELIZABETH KATHLEEN, CPNP 1578645867"
+      }
+    },
+    {
+      "fieldId": 131195,
+      "groupName": "Other",
+      "fieldName": "Date of Most Recent ASD Diagnosis ",
+      "description": "",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 34,
+      "metadataDefinitionAndValue": {
+        "type": "Input",
+        "inputValue": "11/03/2026"
+      }
+    },
+    {
+      "fieldId": 131308,
+      "groupName": "Other",
+      "fieldName": "Supervising BCBA",
+      "description": "",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 35,
+      "metadataDefinitionAndValue": {
+        "type": "Input",
+        "inputValue": "Test Don Swanson"
+      }
+    },
+    {
+      "fieldId": 131314,
+      "groupName": "Other",
+      "fieldName": "Intial Assessment BCBA",
+      "description": "",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 36,
+      "metadataDefinitionAndValue": {
+        "type": "Input",
+        "inputValue": "TEST Zeke BCBA Swanson Test"
+      }
+    },
+    {
+      "fieldId": 133826,
+      "groupName": "Other",
+      "fieldName": "Severity Level",
+      "description": "assigned level based on severity",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 39,
+      "metadataDefinitionAndValue": {
+        "type": "Input",
+        "inputValue": "1"
+      }
+    },
+    {
+      "fieldId": 136052,
+      "groupName": "Other",
+      "fieldName": "NB BCBA",
+      "description": "",
+      "isFilledIn": false,
+      "lastUpdatedBy": 0,
+      "displayOnFacesheet": true,
+      "sortOrder": 40,
+      "metadataDefinitionAndValue": {
+        "type": "Input"
+      }
+    },
+    {
+      "fieldId": 138090,
+      "groupName": "Other",
+      "fieldName": "Policy Holder Name",
+      "description": "",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 41,
+      "metadataDefinitionAndValue": {
+        "type": "Input",
+        "inputValue": "Test Don Swanson"
+      }
+    },
+    {
+      "fieldId": 137667,
+      "groupName": "Other",
+      "fieldName": "Policy Holder DOB",
+      "description": "",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 42,
+      "metadataDefinitionAndValue": {
+        "type": "Input",
+        "inputValue": "03/26/1948"
+      }
+    },
+    {
+      "fieldId": 137697,
+      "groupName": "Other",
+      "fieldName": "Service Address",
+      "description": "",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 43,
+      "metadataDefinitionAndValue": {
+        "type": "TextArea",
+        "textAreaValue": "TEst "
+      }
+    },
+    {
+      "fieldId": 138091,
+      "groupName": "Other",
+      "fieldName": "Service Address 2",
+      "description": "2nd location for services",
+      "isFilledIn": true,
+      "lastUpdatedBy": 4467195,
+      "lastUpdatedByName": "Danny Gavin",
+      "displayOnFacesheet": true,
+      "sortOrder": 44,
+      "metadataDefinitionAndValue": {
+        "type": "Input",
+        "inputValue": "TEst 8484"
+      }
+    }
+  ],
+  "result": "OK",
+  "failed": false,
+  "cachedTime": 0
+}
