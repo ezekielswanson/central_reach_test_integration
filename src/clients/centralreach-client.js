@@ -237,6 +237,17 @@ function createCentralReachClient(config) {
     return response.data;
   }
 
+  async function getEmployee(employeeId) {
+    const response = await requestWithRetry(
+      async () =>
+        apiClient.get(`/contacts/employee/${employeeId}`, {
+          headers: await authHeaders(),
+        }),
+      { employeeId, operation: "getEmployee" }
+    );
+    return response.data;
+  }
+
   async function upsertCentralReachClient(dealContext, crPayload) {
     const externalSystemId = String(dealContext.dealId);
     const targetPayload = { ...crPayload, ExternalSystemId: externalSystemId };
@@ -314,6 +325,7 @@ function createCentralReachClient(config) {
     getClientAuthorizations,
     getAcceptedInsurances,
     getContactMetadata,
+    getEmployee,
   };
 }
 

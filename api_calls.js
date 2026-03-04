@@ -156,6 +156,19 @@ async function main() {
   try {
     validateEnv();
 
+    const employeeId = process.argv[2] === 'employee' ? process.argv[3] : null;
+    if (employeeId) {
+      const config = loadConfig();
+      const cr = createCentralReachClient(config.centralReach);
+      const [employeeData, metadataData] = await Promise.all([
+        cr.getEmployee(employeeId),
+        cr.getContactMetadata(employeeId),
+      ]);
+      writeToOutputFile(employeeId, employeeData, 'employee');
+      writeToOutputFile(employeeId, metadataData, 'metadata');
+      return;
+    }
+
     const metadataContactId = process.argv[2] === 'metadata' ? process.argv[3] : null;
     if (metadataContactId) {
       const config = loadConfig();

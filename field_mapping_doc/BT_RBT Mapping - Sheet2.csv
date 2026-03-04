@@ -1,0 +1,13 @@
+CentralReach Internal Field Value,HubSpot Internal Name,HubSpot Field Label,CR Data Type,Transformation / Logic
+externalSystemId,hs_object_id,Record ID,String,Required. Maps the HubSpot ID to CR for future updates.
+contactId,employee_id,Employee ID,number,The internal CR ID returned in the API response.
+firstName,first_name,First Name,String,Direct mapping.
+lastName,last_name,Last Name,String,Direct mapping.
+primaryEmail,email,Email,String,Direct mapping.
+addressLine1,street_home,Street (Home),String,Direct mapping.
+addressLine2,home_apt,home_apt,String,Direct mapping.
+city,location_city,location_city,String,Direct mapping.
+stateProvince,location_home,location_home,String,"Map full name (e.g., ""New York"") to state code if required."
+zipPostalCode,postal_code,postal_code,String,Direct mapping.
+phoneCell,employee_phone,employee_phone,String,Ensure format is digits only or +1XXXXXXXXXX.
+Work Address (Concatenated),133819,"street_address__work_, city__work_, state__work_, postal_code__work_","Concatenate into a single string: [Street], [City], [State] [Zip].",
