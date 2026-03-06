@@ -19,14 +19,15 @@ const HS_PROPERTIES = [
   "last_sync_at",
   "last_sync_status",
   "last_sync_error",
-  "first_name",
-  "last_name",
+  "bt_name",
+  "date_of_birth",
   "email",
   "street_home",
   "home_apt",
   "location_city",
   "location_home",
   "postal_code",
+  "postal_code_home",
   "employee_phone",
   "street_address__work_",
   "city__work_",
@@ -120,14 +121,39 @@ function cleanEmail(value) {
 function normalizeStateProvince(value) {
   const s = String(value ?? "").trim();
   if (!s) return null;
-  return /^[A-Za-z]{2}$/.test(s) ? s.toUpperCase() : s;
+  return /^[A-Za-z]{2}$/.test(s) ? s.toUpperCase() : null;
 }
 
 function normalizePhone(value) {
   const digits = String(value ?? "").replace(/\D+/g, "");
-  if (digits.length === 11 && digits.startsWith("1")) return `+1${digits.slice(-10)}`;
-  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return digits.slice(-10);
+  if (digits.length === 10) return digits;
   return digits;
+}
+
+function normalizeDateOfBirth(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+
+  const yyyyMmDd = /^(\d{4})-(\d{2})-(\d{2})$/;
+  if (yyyyMmDd.test(raw)) return raw;
+
+  const parsed = new Date(raw);
+  if (!Number.isFinite(parsed.getTime())) return null;
+
+  const iso = parsed.toISOString();
+  return iso.slice(0, 10);
+}
+
+function splitBtName(value) {
+  const full = String(value ?? "").trim();
+  if (!full) return { firstName: null, lastName: null };
+  const parts = full.split(/\s+/).filter(Boolean);
+  if (!parts.length) return { firstName: null, lastName: null };
+  return {
+    firstName: parts[0] || null,
+    lastName: parts.length > 1 ? parts.slice(1).join(" ") : null,
+  };
 }
 
 function buildWorkAddress(props) {
@@ -142,16 +168,18 @@ function buildWorkAddress(props) {
 }
 
 function buildEmployeePayload({ objectId, properties }) {
+  const { firstName, lastName } = splitBtName(properties?.bt_name);
   return {
     externalSystemId: String(properties?.hs_object_id || objectId),
-    firstName: trimOrNull(properties?.first_name),
-    lastName: trimOrNull(properties?.last_name),
+    firstName,
+    lastName,
+    dateOfBirth: normalizeDateOfBirth(properties?.date_of_birth),
     primaryEmail: cleanEmail(properties?.email),
     addressLine1: trimOrNull(properties?.street_home),
     addressLine2: trimOrNull(properties?.home_apt),
     city: trimOrNull(properties?.location_city),
     stateProvince: normalizeStateProvince(properties?.location_home),
-    zipPostalCode: trimOrNull(properties?.postal_code),
+    zipPostalCode: trimOrNull(properties?.postal_code_home),
     phoneCell: normalizePhone(properties?.employee_phone),
   };
 }
@@ -241,9 +269,7 @@ function responseLooksNotFound(data) {
     .join(" ")
     .toLowerCase();
 
-  const hasNotFoundText = /not\s*found|no\s*match|unable\s*to\s*find/.test(text);
-  const explicitFail = data?.result === false || data?.responseStatus?.errorCode != null;
-  return hasNotFoundText || explicitFail;
+  return /not\s*found|no\s*match|unable\s*to\s*find/.test(text);
 }
 
 async function getCrToken(auth, dataStore) {
@@ -318,7 +344,90 @@ function metadataPutBody(value) {
   return { inputValue: String(value).trim() };
 }
 
+function logCrOutboundRequest({ operation, objectId, method, url, payload, contactId = null, fieldId = null }) {
+  safeLog("rtbt_cr_outbound_request", {
+    operation,
+    objectId: String(objectId),
+    ...(contactId ? { contactId: String(contactId) } : {}),
+    ...(fieldId ? { fieldId } : {}),
+    method,
+    url,
+    payload,
+  });
+}
+
+function readCrExternalSystemId(data) {
+  const candidates = [
+    data?.externalSystemId,
+    data?.ExternalSystemId,
+    data?.employee?.externalSystemId,
+    data?.employee?.ExternalSystemId,
+    data?.contact?.externalSystemId,
+    data?.contact?.ExternalSystemId,
+    data?.result?.externalSystemId,
+    data?.result?.ExternalSystemId,
+  ];
+  for (const v of candidates) {
+    if (v != null && String(v).trim() !== "") return String(v).trim();
+  }
+  return null;
+}
+
+function readCrPrimaryEmail(data) {
+  const candidates = [
+    data?.primaryEmail,
+    data?.PrimaryEmail,
+    data?.employee?.primaryEmail,
+    data?.employee?.PrimaryEmail,
+    data?.contact?.primaryEmail,
+    data?.contact?.PrimaryEmail,
+    data?.result?.primaryEmail,
+    data?.result?.PrimaryEmail,
+  ];
+  for (const v of candidates) {
+    if (v != null && String(v).trim() !== "") return String(v).trim().toLowerCase();
+  }
+  return null;
+}
+
+async function fetchCrEmployeeByContactId({ headers, contactId, requestWithRetry, objectId }) {
+  const response = await requestWithRetry(
+    async () =>
+      axios.get(`${CR_BASE_URL}/contacts/employee/${contactId}`, {
+        headers,
+        timeout: 30000,
+      }),
+    "cr.employee.getByContactId",
+    { objectId: String(objectId), contactId: String(contactId) },
+  );
+
+  return response?.data || {};
+}
+
+function buildContactIdSafePayload(basePayload, existingCrEmployee) {
+  const payload = { ...basePayload };
+  const existingExternalSystemId = readCrExternalSystemId(existingCrEmployee);
+  const existingPrimaryEmail = readCrPrimaryEmail(existingCrEmployee);
+
+  if (existingExternalSystemId) payload.externalSystemId = existingExternalSystemId;
+  if (existingPrimaryEmail) payload.primaryEmail = existingPrimaryEmail;
+
+  return {
+    payload,
+    preservedExternalSystemId: Boolean(existingExternalSystemId),
+    preservedPrimaryEmail: Boolean(existingPrimaryEmail),
+  };
+}
+
 async function putEmployeeByContactId({ headers, contactId, employeePayload, requestWithRetry, objectId }) {
+  logCrOutboundRequest({
+    operation: "cr.employee.updateByContactId",
+    objectId,
+    contactId,
+    method: "PUT",
+    url: `${CR_BASE_URL}/contacts/employee/${contactId}`,
+    payload: employeePayload,
+  });
   await requestWithRetry(
     async () =>
       axios.put(`${CR_BASE_URL}/contacts/employee/${contactId}`, employeePayload, {
@@ -333,6 +442,13 @@ async function putEmployeeByContactId({ headers, contactId, employeePayload, req
 
 async function putEmployeeByExternalId({ headers, employeePayload, requestWithRetry, objectId }) {
   try {
+    logCrOutboundRequest({
+      operation: "cr.employee.updateByExternalSystemId",
+      objectId,
+      method: "PUT",
+      url: `${CR_BASE_URL}/contacts/employee/byExternalSystemId`,
+      payload: employeePayload,
+    });
     const response = await requestWithRetry(
       async () =>
         axios.put(`${CR_BASE_URL}/contacts/employee/byExternalSystemId`, employeePayload, {
@@ -347,6 +463,11 @@ async function putEmployeeByExternalId({ headers, employeePayload, requestWithRe
     if (!contactId && responseLooksNotFound(response?.data)) {
       return { found: false, contactId: null };
     }
+    if (!contactId) {
+      const err = new Error("missing_contact_id_from_byExternalSystemId_response");
+      err.response = { data: response?.data };
+      throw err;
+    }
     return { found: true, contactId };
   } catch (error) {
     if (error?.response?.status === 404) {
@@ -357,9 +478,20 @@ async function putEmployeeByExternalId({ headers, employeePayload, requestWithRe
 }
 
 async function createEmployee({ headers, employeePayload, requestWithRetry, objectId }) {
+  const createPayload = {
+    ...employeePayload,
+    ContactForm: "Behavior Technician NY",
+  };
+  logCrOutboundRequest({
+    operation: "cr.employee.create",
+    objectId,
+    method: "POST",
+    url: `${CR_BASE_URL}/contacts/employee`,
+    payload: createPayload,
+  });
   const response = await requestWithRetry(
     async () =>
-      axios.post(`${CR_BASE_URL}/contacts/employee`, employeePayload, {
+      axios.post(`${CR_BASE_URL}/contacts/employee`, createPayload, {
         headers,
         timeout: 30000,
       }),
@@ -373,6 +505,15 @@ async function createEmployee({ headers, employeePayload, requestWithRetry, obje
 
 async function putWorkAddressMetadata({ headers, contactId, workAddress, requestWithRetry, objectId }) {
   if (!workAddress) return;
+  logCrOutboundRequest({
+    operation: "cr.metadata.updateField",
+    objectId,
+    contactId,
+    fieldId: WORK_ADDRESS_FIELD_ID,
+    method: "PUT",
+    url: `${CR_BASE_URL}/contacts/${contactId}/metadata/${WORK_ADDRESS_FIELD_ID}`,
+    payload: metadataPutBody(workAddress),
+  });
   await requestWithRetry(
     async () =>
       axios.put(`${CR_BASE_URL}/contacts/${contactId}/metadata/${WORK_ADDRESS_FIELD_ID}`, metadataPutBody(workAddress), {
@@ -403,10 +544,37 @@ async function processOneRecord({
   const now = new Date().toISOString();
 
   const employeePayload = buildEmployeePayload({ objectId, properties: props });
+  let contactId = normalizeExistingEmployeeId(props?.employee_id);
+  let contactIdPayload = null;
+
+  if (contactId) {
+    const existingCrEmployee = await fetchCrEmployeeByContactId({
+      headers,
+      contactId,
+      requestWithRetry,
+      objectId,
+    });
+    const safePayload = buildContactIdSafePayload(employeePayload, existingCrEmployee);
+    contactIdPayload = safePayload.payload;
+
+    safeLog("rtbt_contactid_identifier_preserve", {
+      objectId: String(objectId),
+      contactId: String(contactId),
+      preservedExternalSystemId: safePayload.preservedExternalSystemId,
+      preservedPrimaryEmail: safePayload.preservedPrimaryEmail,
+    });
+  }
+
   const workAddress = buildWorkAddress(props);
   const desiredHash = hashPayload({
-    employee: employeePayload,
+    employee: contactIdPayload || employeePayload,
     workAddress: workAddress || "",
+  });
+  safeLog("rtbt_payload_selected_for_cr", {
+    objectId: String(objectId),
+    hasContactId: Boolean(contactId),
+    selectedPayload: contactIdPayload || employeePayload,
+    desiredHash,
   });
   const previousHash = String(props?.last_sync_hash || "");
 
@@ -450,13 +618,12 @@ async function processOneRecord({
   }
 
   let operation = "update";
-  let contactId = normalizeExistingEmployeeId(props?.employee_id);
 
   if (contactId) {
     const byIdResult = await putEmployeeByContactId({
       headers,
       contactId,
-      employeePayload,
+      employeePayload: contactIdPayload || employeePayload,
       requestWithRetry,
       objectId,
     });

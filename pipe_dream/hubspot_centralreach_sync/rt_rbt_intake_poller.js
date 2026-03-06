@@ -10,14 +10,22 @@ const HS_PIPELINE_ID_TEST = "851341475";
 // const HS_PIPELINE_ID_PROD = "822050166"; // PROD reference
 
 const BT_RBT_STAGE_ALLOWLIST = [
-  "1223572096", // Cleared to Be Assigned (trigger)
-  "1216507226", // Fully Onboarded
-  "1275661880", // Hired
-  "1313403933", // Assigned
-  "1216507227", // Paused
-  "1263175081", // Disqualified
-  "1299798139", // Resigned
-  "1299798140", // Terminated
+  // PROD references:
+  // "1223572096", // Cleared to Be Assigned (trigger)
+  // "1216507226", // Fully Onboarded
+  // "1275661880", // Hired
+  // "1313403933", // Assigned
+  // "1216507227", // Paused
+  // "1263175081", // Disqualified
+  // "1299798139", // Resigned
+  // "1299798140", // Terminated
+
+  // Sandbox testing references (in order):
+  "1268817294",
+  "1268817295",
+  "1268817296",
+  "1268817297",
+  "1268817298",
 ];
 
 const BT_RBT_LOCK_KEY = "hs_cr_lock:bt_rbt_queue";
@@ -158,30 +166,31 @@ export default defineComponent({
     try {
       // 2) HubSpot custom object search
       const searchUrl = `${HUBSPOT_BASE_URL}/crm/v3/objects/${this.hs_object_type_id}/search`;
+      const searchPayload = {
+        filterGroups: [
+          {
+            filters: [
+              {
+                propertyName: "hs_pipeline",
+                operator: "EQ",
+                value: this.hs_pipeline_id,
+              },
+              {
+                propertyName: "hs_pipeline_stage",
+                operator: "IN",
+                values: BT_RBT_STAGE_ALLOWLIST,
+              },
+            ],
+          },
+        ],
+        properties: ["hs_object_id", "hs_lastmodifieddate", "integration_last_write"],
+        sorts: [{ propertyName: "hs_lastmodifieddate", direction: "DESCENDING" }],
+        limit: 50,
+      };
 
       const searchResponse = await axios.post(
         searchUrl,
-        {
-          filterGroups: [
-            {
-              filters: [
-                {
-                  propertyName: "hs_pipeline",
-                  operator: "EQ",
-                  value: this.hs_pipeline_id,
-                },
-                {
-                  propertyName: "hs_pipeline_stage",
-                  operator: "IN",
-                  values: BT_RBT_STAGE_ALLOWLIST,
-                },
-              ],
-            },
-          ],
-          properties: ["hs_object_id", "hs_lastmodifieddate", "integration_last_write"],
-          sorts: [{ propertyName: "hs_lastmodifieddate", direction: "DESCENDING" }],
-          limit: 50,
-        },
+        searchPayload,
         {
           headers: {
             Authorization: `Bearer ${this.hubspot_access_token}`,
