@@ -1,0 +1,27 @@
+{
+  "labels": [
+    {
+      "labelId": 1052618,
+      "name": "All Employees",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052643,
+      "name": "Clinical",
+      "parentLabelId": 1052613
+    },
+    {
+      "labelId": 1107687,
+      "name": "CO Employee",
+      "parentLabelId": 1108547
+    },
+    {
+      "labelId": 1107692,
+      "name": "RBT CO",
+      "parentLabelId": 1052612
+    }
+  ],
+  "result": "OK",
+  "failed": false,
+  "cachedTime": 1773176792309
+}

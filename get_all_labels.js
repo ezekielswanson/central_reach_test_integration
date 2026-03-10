@@ -51,14 +51,26 @@ async function fetchAllLabels(contactId) {
   return response.data;
 }
 
-function writeOutput(data) {
+function getUniqueOutputPath(outputDir, baseName) {
+  let candidatePath = path.join(outputDir, `${baseName}.json`);
+  let suffix = 1;
+
+  while (fs.existsSync(candidatePath)) {
+    candidatePath = path.join(outputDir, `${baseName}_${suffix}.json`);
+    suffix += 1;
+  }
+
+  return candidatePath;
+}
+
+function writeOutput(data, baseName = 'all_labels') {
   const outputDir = path.join(__dirname, 'output_files');
-  const outputPath = path.join(outputDir, 'all_labels.json');
 
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
+  const outputPath = getUniqueOutputPath(outputDir, baseName);
   fs.writeFileSync(outputPath, JSON.stringify(data, null, 2), 'utf8');
   console.log(`Response written to ${outputPath}`);
 }
@@ -67,8 +79,9 @@ async function main() {
   try {
     validateEnv();
     const contactId = process.argv[2] || DEFAULT_CONTACT_ID;
+    const outputBaseName = process.argv[3] || 'all_labels';
     const labels = await fetchAllLabels(contactId);
-    writeOutput(labels);
+    writeOutput(labels, outputBaseName);
     console.log(`Labels fetched successfully for contact ID ${contactId}.`);
   } catch (err) {
     if (axios.isAxiosError(err)) {

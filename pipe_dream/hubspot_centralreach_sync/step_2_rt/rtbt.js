@@ -29,11 +29,31 @@ const HS_PROPERTIES = [
   "postal_code",
   "postal_code_home",
   "employee_phone",
+  "bt_rbt_type",
   "street_address__work_",
   "city__work_",
   "state__work_",
   "postal_code__work_",
 ];
+
+const CR_EMPLOYEE_LABELS = {
+  ALL_EMPLOYEES: 1052618,
+  BT_NY: 1052630,
+  RBT_NY: 1052631,
+  CLINICAL: 1052643,
+  NY_EMPLOYEE: 1107685,
+  CO_EMPLOYEE: 1107687,
+  RBT_CO: 1107692,
+};
+
+const MANAGED_EMPLOYEE_STATE_LABEL_IDS = new Set([
+  CR_EMPLOYEE_LABELS.BT_NY,
+  CR_EMPLOYEE_LABELS.RBT_NY,
+  CR_EMPLOYEE_LABELS.CLINICAL,
+  CR_EMPLOYEE_LABELS.NY_EMPLOYEE,
+  CR_EMPLOYEE_LABELS.CO_EMPLOYEE,
+  CR_EMPLOYEE_LABELS.RBT_CO,
+]);
 
 const BLOCKED_CREATE_MESSAGE =
   "PUT_ONLY_MODE enabled: create disabled until sandbox. Provide an existing employee_id or disable PUT_ONLY_MODE + enable ALLOW_EMPLOYEE_CREATE.";
@@ -143,6 +163,207 @@ function normalizeDateOfBirth(value) {
 
   const iso = parsed.toISOString();
   return iso.slice(0, 10);
+}
+
+function normalizeBtRbtType(value) {
+  const s = String(value ?? "").trim().toUpperCase();
+  if (s === "BT" || s === "RBT") return s;
+  return null;
+}
+
+function normalizeStateForEmployeeLabels(value) {
+  const s = String(value ?? "").trim();
+  if (!s) return null;
+  if (/^[A-Za-z]{2}$/.test(s)) return s.toUpperCase();
+
+  const upper = s.replace(/\./g, "").replace(/\s+/g, " ").toUpperCase();
+  if (upper === "NEW YORK") return "NY";
+  if (upper === "COLORADO") return "CO";
+  return null;
+}
+
+function requiredEmployeeLabelIds({ btRbtType, stateCode }) {
+  const labels = [CR_EMPLOYEE_LABELS.ALL_EMPLOYEES];
+
+  if (stateCode === "NY") {
+    labels.push(
+      CR_EMPLOYEE_LABELS.BT_NY,
+      CR_EMPLOYEE_LABELS.CLINICAL,
+      CR_EMPLOYEE_LABELS.NY_EMPLOYEE
+    );
+    if (btRbtType === "RBT") labels.push(CR_EMPLOYEE_LABELS.RBT_NY);
+    return labels;
+  }
+
+  if (stateCode === "CO" && btRbtType === "BT") {
+    labels.push(
+      CR_EMPLOYEE_LABELS.CLINICAL,
+      CR_EMPLOYEE_LABELS.CO_EMPLOYEE,
+      CR_EMPLOYEE_LABELS.RBT_CO
+    );
+  }
+
+  return labels;
+}
+
+function extractLabelIdsFromResponse(data) {
+  const labels = Array.isArray(data?.labels) ? data.labels : [];
+  return labels
+    .map((label) => Number(label?.labelId ?? label?.id ?? label))
+    .filter((id) => Number.isFinite(id));
+}
+
+function mergeUniqueNumericIds(values) {
+  return Array.from(
+    new Set(
+      values
+        .map((value) => Number(value))
+        .filter((value) => Number.isFinite(value))
+    )
+  );
+}
+
+function sameNumericIdSet(left, right) {
+  const a = mergeUniqueNumericIds(left).sort((x, y) => x - y);
+  const b = mergeUniqueNumericIds(right).sort((x, y) => x - y);
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
+async function getContactLabelIds({ headers, contactId, requestWithRetry, objectId }) {
+  const normalizedContactId = String(contactId);
+  logCrOutboundRequest({
+    operation: "cr.labels.list",
+    objectId,
+    contactId: normalizedContactId,
+    method: "GET",
+    url: `${CR_BASE_URL}/contacts/${normalizedContactId}/labels`,
+    payload: null,
+  });
+
+  const response = await requestWithRetry(
+    async () =>
+      axios.get(`${CR_BASE_URL}/contacts/${normalizedContactId}/labels`, {
+        headers,
+        timeout: 30000,
+      }),
+    "cr.labels.list",
+    { objectId: String(objectId), contactId: normalizedContactId }
+  );
+
+  return extractLabelIdsFromResponse(response?.data);
+}
+
+async function postContactLabels({ headers, contactId, labelIds, requestWithRetry, objectId }) {
+  const normalizedContactId = String(contactId);
+  const normalizedLabelIds = mergeUniqueNumericIds(labelIds);
+  if (!normalizedLabelIds.length) return { operation: "skip_empty" };
+
+  const primaryBody = { labels: normalizedLabelIds.map((labelId) => ({ labelId })) };
+  logCrOutboundRequest({
+    operation: "cr.labels.update",
+    objectId,
+    contactId: normalizedContactId,
+    method: "POST",
+    url: `${CR_BASE_URL}/contacts/${normalizedContactId}/labels`,
+    payload: primaryBody,
+  });
+
+  try {
+    await requestWithRetry(
+      async () =>
+        axios.post(`${CR_BASE_URL}/contacts/${normalizedContactId}/labels`, primaryBody, {
+          headers,
+          timeout: 30000,
+        }),
+      "cr.labels.update",
+      { objectId: String(objectId), contactId: normalizedContactId, labelCount: normalizedLabelIds.length }
+    );
+    return { operation: "updated", bodyShape: "labels[]" };
+  } catch (error) {
+    if (error?.response?.status !== 400) throw error;
+
+    const fallbackBody = { labelIds: normalizedLabelIds };
+    safeLog("rtbt_labels_body_fallback", {
+      objectId: String(objectId),
+      contactId: normalizedContactId,
+      fromBodyShape: "labels[]",
+      toBodyShape: "labelIds[]",
+    });
+    logCrOutboundRequest({
+      operation: "cr.labels.update.fallback",
+      objectId,
+      contactId: normalizedContactId,
+      method: "POST",
+      url: `${CR_BASE_URL}/contacts/${normalizedContactId}/labels`,
+      payload: fallbackBody,
+    });
+
+    await requestWithRetry(
+      async () =>
+        axios.post(`${CR_BASE_URL}/contacts/${normalizedContactId}/labels`, fallbackBody, {
+          headers,
+          timeout: 30000,
+        }),
+      "cr.labels.update.fallback",
+      { objectId: String(objectId), contactId: normalizedContactId, labelCount: normalizedLabelIds.length }
+    );
+    return { operation: "updated", bodyShape: "labelIds[]" };
+  }
+}
+
+async function syncEmployeeLabels({
+  headers,
+  contactId,
+  btRbtType,
+  stateCode,
+  requestWithRetry,
+  objectId,
+}) {
+  const requiredLabelIds = requiredEmployeeLabelIds({ btRbtType, stateCode });
+  const existingLabelIds = await getContactLabelIds({
+    headers,
+    contactId,
+    requestWithRetry,
+    objectId,
+  });
+  // Keep unrelated labels, but replace managed NY/CO/role labels from current HS truth.
+  const existingUnmanaged = existingLabelIds.filter(
+    (id) => !MANAGED_EMPLOYEE_STATE_LABEL_IDS.has(Number(id))
+  );
+  const desiredLabelIds = mergeUniqueNumericIds([...existingUnmanaged, ...requiredLabelIds]);
+
+  if (sameNumericIdSet(existingLabelIds, desiredLabelIds)) {
+    return {
+      operation: "noop",
+      btRbtType,
+      stateCode,
+      requiredCount: requiredLabelIds.length,
+      existingCount: existingLabelIds.length,
+      desiredCount: desiredLabelIds.length,
+    };
+  }
+
+  const postResult = await postContactLabels({
+    headers,
+    contactId,
+    labelIds: desiredLabelIds,
+    requestWithRetry,
+    objectId,
+  });
+
+  return {
+    operation: postResult.operation,
+    bodyShape: postResult.bodyShape || null,
+    btRbtType,
+    stateCode,
+    requiredCount: requiredLabelIds.length,
+    existingCount: existingLabelIds.length,
+    desiredCount: desiredLabelIds.length,
+  };
 }
 
 function splitBtName(value) {
@@ -544,6 +765,10 @@ async function processOneRecord({
   const now = new Date().toISOString();
 
   const employeePayload = buildEmployeePayload({ objectId, properties: props });
+  const btRbtType = normalizeBtRbtType(props?.bt_rbt_type);
+  const stateCodeForLabels = normalizeStateForEmployeeLabels(
+    props?.location_home || employeePayload?.stateProvince
+  );
   let contactId = normalizeExistingEmployeeId(props?.employee_id);
   let contactIdPayload = null;
 
@@ -690,6 +915,31 @@ async function processOneRecord({
       requestWithRetry,
       objectId,
     });
+  }
+
+  if (contactId) {
+    try {
+      const labelSyncResult = await syncEmployeeLabels({
+        headers,
+        contactId,
+        btRbtType,
+        stateCode: stateCodeForLabels,
+        requestWithRetry,
+        objectId,
+      });
+
+      safeLog("rtbt_label_sync_complete", {
+        objectId: String(objectId),
+        contactId: String(contactId),
+        ...labelSyncResult,
+      });
+    } catch (error) {
+      safeLog("rtbt_label_sync_failed", {
+        objectId: String(objectId),
+        contactId: String(contactId),
+        ...toErrorMeta(error),
+      });
+    }
   }
 
   const successProps = {
