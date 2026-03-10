@@ -14,6 +14,13 @@ const PAYLOAD_HASH_TTL_SECONDS = 2592000; // 30 days
 const CR_ACCEPTED_INSURANCES_CACHE_KEY = "cr:accepted_insurances:v1";
 const CR_ACCEPTED_INSURANCES_TTL_SECONDS = 86400; // 24h
 
+// CR Label IDs
+const CR_CLIENT_LABELS = {
+  ALL_CLIENTS: 1052619,
+  NY_CLIENT: 1082499,
+  CO_CLIENT: 1082500,
+};
+
 // CR Client Metadata Field IDs (from your UI)
 const CR_META_FIELDS = {
   ALLERGIES: 126214,
@@ -251,6 +258,86 @@ function mapGender(value) {
   return null;
 }
 
+const US_STATE_NAME_TO_CODE = {
+  ALABAMA: "AL",
+  ALASKA: "AK",
+  ARIZONA: "AZ",
+  ARKANSAS: "AR",
+  CALIFORNIA: "CA",
+  COLORADO: "CO",
+  CONNECTICUT: "CT",
+  DELAWARE: "DE",
+  FLORIDA: "FL",
+  GEORGIA: "GA",
+  HAWAII: "HI",
+  IDAHO: "ID",
+  ILLINOIS: "IL",
+  INDIANA: "IN",
+  IOWA: "IA",
+  KANSAS: "KS",
+  KENTUCKY: "KY",
+  LOUISIANA: "LA",
+  MAINE: "ME",
+  MARYLAND: "MD",
+  MASSACHUSETTS: "MA",
+  MICHIGAN: "MI",
+  MINNESOTA: "MN",
+  MISSISSIPPI: "MS",
+  MISSOURI: "MO",
+  MONTANA: "MT",
+  NEBRASKA: "NE",
+  NEVADA: "NV",
+  "NEW HAMPSHIRE": "NH",
+  "NEW JERSEY": "NJ",
+  "NEW MEXICO": "NM",
+  "NEW YORK": "NY",
+  "NORTH CAROLINA": "NC",
+  "NORTH DAKOTA": "ND",
+  OHIO: "OH",
+  OKLAHOMA: "OK",
+  OREGON: "OR",
+  PENNSYLVANIA: "PA",
+  "RHODE ISLAND": "RI",
+  "SOUTH CAROLINA": "SC",
+  "SOUTH DAKOTA": "SD",
+  TENNESSEE: "TN",
+  TEXAS: "TX",
+  UTAH: "UT",
+  VERMONT: "VT",
+  VIRGINIA: "VA",
+  WASHINGTON: "WA",
+  "WEST VIRGINIA": "WV",
+  WISCONSIN: "WI",
+  WYOMING: "WY",
+  "DISTRICT OF COLUMBIA": "DC",
+};
+
+function normalizeStateProvince(value) {
+  const s = String(value || "").trim();
+  if (!s) return null;
+
+  if (/^[A-Za-z]{2}$/.test(s)) return s.toUpperCase();
+
+  const normalizedName = s.replace(/\./g, "").replace(/\s+/g, " ").toUpperCase();
+  return US_STATE_NAME_TO_CODE[normalizedName] || null;
+}
+
+function normalizeClientStateForLabel(stateValue) {
+  const normalized = String(stateValue || "").trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized === "ny" || normalized === "new york") return "NY";
+  if (normalized === "co" || normalized === "colorado") return "CO";
+  return null;
+}
+
+function requiredClientLabelIdsForState(stateValue) {
+  const normalizedState = normalizeClientStateForLabel(stateValue);
+  const labelIds = [CR_CLIENT_LABELS.ALL_CLIENTS];
+  if (normalizedState === "NY") labelIds.push(CR_CLIENT_LABELS.NY_CLIENT);
+  if (normalizedState === "CO") labelIds.push(CR_CLIENT_LABELS.CO_CLIENT);
+  return labelIds;
+}
+
 function buildValidationError(dealId, missingFieldKeys) {
   const err = new Error("missing_required_fields");
   err.name = "PayloadValidationError";
@@ -444,6 +531,109 @@ function getMetadataValuePreview(metadataField) {
     null;
 
   return value == null ? null : String(value).slice(0, 60);
+}
+
+function extractLabelIdsFromResponse(data) {
+  const labels = Array.isArray(data?.labels) ? data.labels : [];
+  return labels
+    .map((label) => Number(label?.labelId ?? label?.id ?? label))
+    .filter((id) => Number.isFinite(id));
+}
+
+function mergeUniqueNumericIds(values) {
+  return Array.from(
+    new Set(
+      values
+        .map((value) => Number(value))
+        .filter((value) => Number.isFinite(value))
+    )
+  );
+}
+
+async function getContactLabelIds({ headers, contactId, requestWithRetry }) {
+  const normalizedContactId = String(contactId);
+  const response = await requestWithRetry(
+    async () =>
+      axios.get(`${CR_BASE_URL}/contacts/${normalizedContactId}/labels`, {
+        headers,
+        timeout: 30000,
+      }),
+    "cr.labels.list",
+    { contactId: normalizedContactId }
+  );
+  return extractLabelIdsFromResponse(response?.data);
+}
+
+async function postContactLabels({ headers, contactId, labelIds, requestWithRetry }) {
+  const normalizedContactId = String(contactId);
+  const normalizedLabelIds = mergeUniqueNumericIds(labelIds);
+  if (!normalizedLabelIds.length) return { operation: "skip_empty" };
+
+  const primaryBody = { labels: normalizedLabelIds.map((labelId) => ({ labelId })) };
+  try {
+    await requestWithRetry(
+      async () =>
+        axios.post(`${CR_BASE_URL}/contacts/${normalizedContactId}/labels`, primaryBody, {
+          headers,
+          timeout: 30000,
+        }),
+      "cr.labels.update",
+      { contactId: normalizedContactId, labelCount: normalizedLabelIds.length, bodyShape: "labels[]" }
+    );
+    return { operation: "updated", bodyShape: "labels[]" };
+  } catch (error) {
+    if (error?.response?.status !== 400) throw error;
+
+    safeLog("LABELS_POST_BODY_FALLBACK", {
+      contactId: normalizedContactId,
+      fromBodyShape: "labels[]",
+      toBodyShape: "labelIds[]",
+    });
+
+    const fallbackBody = { labelIds: normalizedLabelIds };
+    await requestWithRetry(
+      async () =>
+        axios.post(`${CR_BASE_URL}/contacts/${normalizedContactId}/labels`, fallbackBody, {
+          headers,
+          timeout: 30000,
+        }),
+      "cr.labels.update.fallback",
+      { contactId: normalizedContactId, labelCount: normalizedLabelIds.length, bodyShape: "labelIds[]" }
+    );
+    return { operation: "updated", bodyShape: "labelIds[]" };
+  }
+}
+
+async function syncClientLabels({ headers, contactId, stateValue, requestWithRetry }) {
+  const normalizedContactId = String(contactId);
+  const requiredIds = requiredClientLabelIdsForState(stateValue);
+  const existingIds = await getContactLabelIds({ headers, contactId: normalizedContactId, requestWithRetry });
+  const mergedIds = mergeUniqueNumericIds([...existingIds, ...requiredIds]);
+
+  const missingRequiredCount = requiredIds.filter((id) => !existingIds.includes(id)).length;
+  if (missingRequiredCount === 0) {
+    return {
+      operation: "noop",
+      existingCount: existingIds.length,
+      mergedCount: mergedIds.length,
+      normalizedState: normalizeClientStateForLabel(stateValue),
+    };
+  }
+
+  const postResult = await postContactLabels({
+    headers,
+    contactId: normalizedContactId,
+    labelIds: mergedIds,
+    requestWithRetry,
+  });
+
+  return {
+    operation: postResult.operation,
+    bodyShape: postResult.bodyShape || null,
+    existingCount: existingIds.length,
+    mergedCount: mergedIds.length,
+    normalizedState: normalizeClientStateForLabel(stateValue),
+  };
 }
 
 async function updateContactMetadataField({ headers, contactId, fieldId, value, requestWithRetry }) {
@@ -1179,7 +1369,9 @@ function transformToCrPayload({ deal, contact }) {
       dealProps.street_address,
     AddressLine2: dealProps.home_apt,
     City: dealProps.location_city,
-    StateProvince: dealProps.location_central_reach || dealProps.location,
+    StateProvince: normalizeStateProvince(
+      dealProps.location_central_reach || dealProps.location
+    ),
     ZipPostalCode: dealProps.postal_code,
 
     GuardianFirstName: dealProps.guardian_first_name,
@@ -1293,6 +1485,27 @@ async function upsertCrAndWriteback({
       httpStatus: created?.status ?? null,
       returnedContactId: crContactId,
       responseKeys: created?.data ? Object.keys(created.data) : null,
+    });
+  }
+
+  // Label sync (best effort; do not fail whole deal if label call fails)
+  try {
+    const labelSyncResult = await syncClientLabels({
+      headers,
+      contactId: crContactId,
+      stateValue: payload?.StateProvince,
+      requestWithRetry,
+    });
+    safeLog("LABEL_SYNC_COMPLETE", {
+      dealId: String(dealId),
+      crContactId: String(crContactId),
+      ...labelSyncResult,
+    });
+  } catch (e) {
+    safeLog("LABEL_SYNC_FAILED", {
+      dealId: String(dealId),
+      crContactId: String(crContactId),
+      ...toErrorMeta(e),
     });
   }
 

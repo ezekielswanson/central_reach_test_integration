@@ -1,0 +1,202 @@
+{
+  "labels": [
+    {
+      "labelId": 1052526,
+      "name": "Applicant Intake",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052527,
+      "name": "1) Candidate",
+      "parentLabelId": 1052526
+    },
+    {
+      "labelId": 1052528,
+      "name": "2) Interviewing",
+      "parentLabelId": 1052526
+    },
+    {
+      "labelId": 1052529,
+      "name": "3) Documentation",
+      "parentLabelId": 1052526
+    },
+    {
+      "labelId": 1052530,
+      "name": "4) Will not hire",
+      "parentLabelId": 1052526
+    },
+    {
+      "labelId": 1052612,
+      "name": "Credentials",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052615,
+      "name": "Client Service Type",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052616,
+      "name": "Client Service Location",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052617,
+      "name": "Referring Provider",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052618,
+      "name": "All Employees",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052619,
+      "name": "All Clients",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052629,
+      "name": "BCBA",
+      "parentLabelId": 1052612
+    },
+    {
+      "labelId": 1052630,
+      "name": "Behavior Technician NY",
+      "parentLabelId": 1052612
+    },
+    {
+      "labelId": 1052631,
+      "name": "RBT NY",
+      "parentLabelId": 1052612
+    },
+    {
+      "labelId": 1052644,
+      "name": "Public Submission",
+      "parentLabelId": 1052614
+    },
+    {
+      "labelId": 1052651,
+      "name": "ABA",
+      "parentLabelId": 1052615
+    },
+    {
+      "labelId": 1052655,
+      "name": "Clinic",
+      "parentLabelId": 1052616
+    },
+    {
+      "labelId": 1052656,
+      "name": "Home",
+      "parentLabelId": 1052616
+    },
+    {
+      "labelId": 1056413,
+      "name": "Referral Source ",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1082499,
+      "name": "NY Client",
+      "parentLabelId": 1052616
+    },
+    {
+      "labelId": 1082500,
+      "name": "CO Client",
+      "parentLabelId": 1052616
+    },
+    {
+      "labelId": 1082501,
+      "name": "NJ Client",
+      "parentLabelId": 1052616
+    },
+    {
+      "labelId": 1103437,
+      "name": "Billing Hold Medicaid affiliation",
+      "parentLabelId": 1052545
+    },
+    {
+      "labelId": 1107647,
+      "name": "NY Medicaid",
+      "parentLabelId": 1052545
+    },
+    {
+      "labelId": 1107685,
+      "name": "NY Employee",
+      "parentLabelId": 1108547
+    },
+    {
+      "labelId": 1107686,
+      "name": "NJ Employee",
+      "parentLabelId": 1108547
+    },
+    {
+      "labelId": 1107687,
+      "name": "CO Employee",
+      "parentLabelId": 1108547
+    },
+    {
+      "labelId": 1107692,
+      "name": "RBT CO",
+      "parentLabelId": 1052612
+    },
+    {
+      "labelId": 1107757,
+      "name": "Queens BCBA",
+      "parentLabelId": 1108058
+    },
+    {
+      "labelId": 1107758,
+      "name": "Brooklyn BCBA",
+      "parentLabelId": 1108058
+    },
+    {
+      "labelId": 1107759,
+      "name": "Yonkers BCBA",
+      "parentLabelId": 1108058
+    },
+    {
+      "labelId": 1107760,
+      "name": "Manhattan BCBA",
+      "parentLabelId": 1108058
+    },
+    {
+      "labelId": 1107761,
+      "name": "Long Island ",
+      "parentLabelId": 1108058
+    },
+    {
+      "labelId": 1108058,
+      "name": "BCBA Location",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1108059,
+      "name": "Long Island BCBA",
+      "parentLabelId": 1108058
+    },
+    {
+      "labelId": 1108060,
+      "name": "Bronx BCBA",
+      "parentLabelId": 1108058
+    },
+    {
+      "labelId": 1108061,
+      "name": "Remote BCBA",
+      "parentLabelId": 1108058
+    },
+    {
+      "labelId": 1108106,
+      "name": "NJ BCBA",
+      "parentLabelId": 1108058
+    },
+    {
+      "labelId": 1108547,
+      "name": "Provider State Location",
+      "parentLabelId": 0
+    }
+  ],
+  "result": "OK",
+  "failed": false,
+  "cachedTime": 1773170948724
+}
