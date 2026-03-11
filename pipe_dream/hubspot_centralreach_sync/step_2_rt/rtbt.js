@@ -505,14 +505,9 @@ function truncateSafeErrorMessage(error) {
 }
 
 function getObjectIdsToSync(steps) {
-  const stepEntries = Object.values(steps || {});
-  for (const entry of stepEntries) {
-    const candidate = entry?.$return_value;
-    if (Array.isArray(candidate?.objectIdsToSync)) {
-      return candidate.objectIdsToSync.map((v) => String(v));
-    }
-  }
-  return [];
+  const step1 = steps?.Intake_Poller?.$return_value;
+  const ids = step1?.btRbtRecordIdsToSync;
+  return Array.isArray(ids) ? ids.map((v) => String(v)) : [];
 }
 
 function normalizeExistingEmployeeId(value) {
@@ -906,8 +901,6 @@ async function processOneRecord({
         last_sync_status: "noop",
         last_sync_at: now,
         last_sync_error: "",
-        integration_last_write: now,
-        updated_by_integration: true,
       },
     });
     return { ...baseProcessed, operation: "noop", employee_id: normalizeExistingEmployeeId(props?.employee_id) };
@@ -923,8 +916,6 @@ async function processOneRecord({
         last_sync_status: "noop",
         last_sync_at: now,
         last_sync_error: "",
-        integration_last_write: now,
-        updated_by_integration: true,
       },
     });
     return { ...baseProcessed, operation: "noop", employee_id: normalizeExistingEmployeeId(props?.employee_id) };
@@ -1069,8 +1060,8 @@ export default defineComponent({
     max_records_per_run: { type: "integer", default: 15 },
     ALLOW_EMPLOYEE_CREATE: { type: "boolean", default: false },
     PUT_ONLY_MODE: { type: "boolean", default: true },
-    debug_verbose_logs: { type: "boolean", default: true },
-    debug_full_payload_logs: { type: "boolean", default: true },
+    debug_verbose_logs: { type: "boolean", default: false },
+    debug_full_payload_logs: { type: "boolean", default: false },
   },
 
   async run({ steps }) {

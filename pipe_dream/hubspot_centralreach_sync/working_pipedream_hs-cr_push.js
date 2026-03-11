@@ -8,7 +8,6 @@ const HUBSPOT_BASE_URL = "https://api.hubapi.com";
 const CR_TOKEN_URL = "https://login.centralreach.com/connect/token";
 const CR_BASE_URL = "https://partners-api.centralreach.com/enterprise/v1";
 const CR_ACCESS_TOKEN_KEY = "cr:access_token";
-const PAYLOAD_HASH_TTL_SECONDS = 2592000; // 30 days
 
 // Accepted insurances cache
 const CR_ACCEPTED_INSURANCES_CACHE_KEY = "cr:accepted_insurances:v1";
@@ -1389,6 +1388,8 @@ async function upsertCrAndWriteback({
   dealId,
   hsCrContactIdProperty = "client_id_number",
   payload,
+  existingContactId,
+  previousSyncHash,
 }) {
   const requestWithRetry = async (fn, operation, meta = {}) =>
     withRetry(fn, {
@@ -1405,30 +1406,17 @@ async function upsertCrAndWriteback({
     Authorization: `Bearer ${token}`,
   };
 
-  const hsDealResponse = await requestWithRetry(
-    async () =>
-      axios.get(`${HUBSPOT_BASE_URL}/crm/v3/objects/deals/${dealId}`, {
-        headers: { Authorization: `Bearer ${hubspotToken}`, Accept: "application/json" },
-        params: { properties: hsCrContactIdProperty },
-        timeout: 30000,
-      }),
-    "hubspot.getDeal",
-    { dealId: String(dealId) }
-  );
-
-  const existingContactId = hsDealResponse.data?.properties?.[hsCrContactIdProperty];
-
   const incomingHash = hashPayload(toComparableShape(payload));
-  const payloadHashKey = `hs_cr:payload_hash:${String(dealId)}`;
-  const previousHashRecord = dataStore ? await dataStore.get(payloadHashKey) : null;
-  const hasSamePayloadHash = Boolean(existingContactId) && previousHashRecord?.hash === incomingHash;
+  const previousHash = String(previousSyncHash || "");
+  const hasSamePayloadHash = Boolean(existingContactId) && Boolean(previousHash) && previousHash === incomingHash;
+  const now = new Date().toISOString();
 
   safeLog("DEBUG_HASH_CHECK", {
     dealId: String(dealId),
     existingContactId: existingContactId ? String(existingContactId) : null,
     hasSamePayloadHash,
     incomingHash,
-    previousHash: previousHashRecord?.hash || null,
+    previousHash: previousHash || null,
   });
 
   let operation = "create";
@@ -1592,8 +1580,27 @@ async function upsertCrAndWriteback({
     safeLog("META_PUT_FAILED", { dealId: String(dealId), crContactId: String(crContactId), ...toErrorMeta(e) });
   }
 
-  // Writeback only on create/update
-  if (operation !== "noop") {
+  if (operation === "noop") {
+    await requestWithRetry(
+      async () =>
+        axios.patch(
+          `${HUBSPOT_BASE_URL}/crm/v3/objects/deals/${dealId}`,
+          {
+            properties: {
+              last_sync_status: "noop",
+              last_sync_at: now,
+              last_sync_error: "",
+            },
+          },
+          {
+            headers: { Authorization: `Bearer ${hubspotToken}`, Accept: "application/json" },
+            timeout: 30000,
+          }
+        ),
+      "hubspot.writeBackNoop",
+      { dealId: String(dealId), operation }
+    );
+  } else {
     await requestWithRetry(
       async () =>
         axios.patch(
@@ -1601,8 +1608,12 @@ async function upsertCrAndWriteback({
           {
             properties: {
               [hsCrContactIdProperty]: String(crContactId),
+              last_sync_hash: incomingHash,
+              last_sync_status: "success",
+              last_sync_at: now,
+              last_sync_error: "",
               updated_by_integration: true,
-              integration_last_write: new Date().toISOString(),
+              integration_last_write: now,
             },
           },
           {
@@ -1612,15 +1623,6 @@ async function upsertCrAndWriteback({
         ),
       "hubspot.writeBack",
       { dealId: String(dealId), operation }
-    );
-  }
-
-  // Save payload hash only on create/update
-  if (dataStore && (operation === "create" || operation === "update")) {
-    await dataStore.set(
-      payloadHashKey,
-      { dealId: String(dealId), hash: incomingHash, timestamp: new Date().toISOString() },
-      { ttl: PAYLOAD_HASH_TTL_SECONDS }
     );
   }
 
@@ -1637,7 +1639,7 @@ async function upsertCrAndWriteback({
 // Step 2 runner
 // -------------------------
 function getDealIdsToSync(steps) {
-  const step1 = steps?.HS_CR_Sync_One_Deal?.$return_value;
+  const step1 = steps?.Intake_Poller?.$return_value;
   const dealIds = step1?.dealIdsToSync;
   return Array.isArray(dealIds) ? dealIds.map(String) : [];
 }
@@ -1677,6 +1679,12 @@ export default defineComponent({
         "pipeline",
         "dealstage",
         "client_id_number",
+        "last_sync_hash",
+        "last_sync_at",
+        "last_sync_status",
+        "last_sync_error",
+        "updated_by_integration",
+        "integration_last_write",
         "phi_date_of_birth",
         "phi_gender",
         "phi_first_name__cloned_",
@@ -1748,6 +1756,9 @@ export default defineComponent({
         });
 
         const payload = transformToCrPayload(hydrated);
+        const existingContactId =
+          hydrated.deal?.properties?.[this.hs_cr_contact_id_property] || null;
+        const previousSyncHash = String(hydrated.deal?.properties?.last_sync_hash || "");
 
         // 1) Upsert client + writeback + metadata PUT
         const result = await upsertCrAndWriteback({
@@ -1757,6 +1768,8 @@ export default defineComponent({
           dealId,
           hsCrContactIdProperty: this.hs_cr_contact_id_property,
           payload,
+          existingContactId,
+          previousSyncHash,
         });
 
         // 2) Upsert payors using result.crContactId directly
@@ -1794,8 +1807,32 @@ export default defineComponent({
         });
       } catch (error) {
         const meta = toErrorMeta(error);
+        const now = new Date().toISOString();
+        const safeError = safeString(meta.errorMessage || "unknown_error", 500);
         safeLog("hs_to_cr_push deal failed", { dealId: String(dealId), ...meta });
         errors.push({ dealId: String(dealId), ...meta });
+
+        try {
+          await axios.patch(
+            `${HUBSPOT_BASE_URL}/crm/v3/objects/deals/${dealId}`,
+            {
+              properties: {
+                last_sync_status: "error",
+                last_sync_at: now,
+                last_sync_error: safeError || "unknown_error",
+              },
+            },
+            {
+              headers: { Authorization: `Bearer ${this.hubspot_access_token}`, Accept: "application/json" },
+              timeout: 30000,
+            }
+          );
+        } catch (writebackErr) {
+          safeLog("hs_to_cr_push error writeback failed", {
+            dealId: String(dealId),
+            ...toErrorMeta(writebackErr),
+          });
+        }
 
         await this.dataStore.set(
           `hs_cr_push_last_error:${dealId}`,
