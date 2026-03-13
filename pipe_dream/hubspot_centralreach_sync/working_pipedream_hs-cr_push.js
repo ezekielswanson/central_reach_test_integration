@@ -8,6 +8,9 @@ const HUBSPOT_BASE_URL = "https://api.hubapi.com";
 const CR_TOKEN_URL = "https://login.centralreach.com/connect/token";
 const CR_BASE_URL = "https://partners-api.centralreach.com/enterprise/v1";
 const CR_ACCESS_TOKEN_KEY = "cr:access_token";
+const HUBSPOT_PORTAL_ID_TEST = "50850427";
+// const HUBSPOT_PORTAL_ID_LIVE = "50317927";
+const HUBSPOT_DEAL_OBJECT_TYPE_ID = "0-3";
 
 // Accepted insurances cache
 const CR_ACCEPTED_INSURANCES_CACHE_KEY = "cr:accepted_insurances:v1";
@@ -43,6 +46,7 @@ const CR_META_FIELDS = {
   POLICY_HOLDER_DOB: 137667,
   CURRENT_INSURANCE: 126210,
   INSURANCE_ID: 131316,
+  HUBSPOT_LINK_TO_CASE_RECORD: 138702,
 };
 
 const CR_METADATA_FIELD_TYPES = Object.values(CR_META_FIELDS).reduce((acc, fieldId) => {
@@ -186,6 +190,18 @@ function normalizePhone(value) {
   if (digits.length === 11 && digits.startsWith("1")) return digits.slice(1);
   if (digits.length === 10) return digits;
   return null;
+}
+
+function buildHubspotDealUrl(hsObjectId) {
+  const id = String(hsObjectId || "").trim();
+  if (!id) return null;
+  return `https://app.hubspot.com/contacts/${HUBSPOT_PORTAL_ID_TEST}/record/${HUBSPOT_DEAL_OBJECT_TYPE_ID}/${id}`;
+}
+
+function buildCentralReachContactUrl(contactId) {
+  const id = String(contactId || "").trim();
+  if (!id) return null;
+  return `https://members.centralreach.com/#contacts/details/?id=${id}`;
 }
 
 function cleanEmail(value) {
@@ -503,6 +519,9 @@ function getExtendedMetadataValues(dealProps) {
     [CR_META_FIELDS.POLICY_HOLDER_DOB]: toMetadataDate(dealProps.phi__policy_holder_dob),
     [CR_META_FIELDS.CURRENT_INSURANCE]: getCurrentInsuranceMetaValue(dealProps),
     [CR_META_FIELDS.INSURANCE_ID]: getInsuranceIdForMetaField(dealProps, 1),
+    [CR_META_FIELDS.HUBSPOT_LINK_TO_CASE_RECORD]: buildHubspotDealUrl(
+      dealProps.hs_object_id
+    ),
   };
 }
 
@@ -1559,6 +1578,7 @@ async function upsertCrAndWriteback({
               "insurance_id_2",
               "insurance_id_3",
               "insurance_id_4",
+              "hs_object_id",
             ].join(","),
           },
           timeout: 30000,
@@ -1630,6 +1650,7 @@ async function upsertCrAndWriteback({
           {
             properties: {
               [hsCrContactIdProperty]: String(crContactId),
+              central_reach_link_to_client: buildCentralReachContactUrl(crContactId),
               last_sync_hash: incomingHash,
               last_sync_status: "success",
               last_sync_at: now,

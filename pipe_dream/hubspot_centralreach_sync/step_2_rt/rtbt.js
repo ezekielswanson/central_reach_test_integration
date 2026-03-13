@@ -6,6 +6,9 @@ const CR_TOKEN_URL = "https://login.centralreach.com/connect/token";
 const CR_BASE_URL = "https://partners-api.centralreach.com/enterprise/v1";
 const CR_ACCESS_TOKEN_KEY = "cr:access_token";
 const WORK_ADDRESS_FIELD_ID = 133819;
+const HUBSPOT_LINK_TO_RT_RBT_FIELD_ID = 138703;
+const HUBSPOT_PORTAL_ID_TEST = "50850427";
+// const HUBSPOT_PORTAL_ID_LIVE = "50317927";
 const HS_OBJECT_TYPE_ID_TEST = "2-55656309";
 // const HS_OBJECT_TYPE_ID_PROD = "2-48354559"; // PROD reference
 const DEBUG_CONFIG = {
@@ -621,6 +624,19 @@ function metadataPutBody(value) {
   return { inputValue: String(value).trim() };
 }
 
+function buildHubspotRtRbtUrl(hsObjectId, objectTypeId) {
+  const id = String(hsObjectId || "").trim();
+  const hsType = String(objectTypeId || "").trim();
+  if (!id || !hsType) return null;
+  return `https://app.hubspot.com/contacts/${HUBSPOT_PORTAL_ID_TEST}/record/${hsType}/${id}`;
+}
+
+function buildCentralReachContactUrl(contactId) {
+  const id = String(contactId || "").trim();
+  if (!id) return null;
+  return `https://members.centralreach.com/#contacts/details/?id=${id}`;
+}
+
 function logCrOutboundRequest({ operation, objectId, method, url, payload, contactId = null, fieldId = null }) {
   debugLog("rtbt_cr_outbound_request", {
     operation,
@@ -802,6 +818,38 @@ async function putWorkAddressMetadata({ headers, contactId, workAddress, request
   );
 }
 
+async function putHubspotRtRbtLinkMetadata({
+  headers,
+  contactId,
+  hubspotRecordUrl,
+  requestWithRetry,
+  objectId,
+}) {
+  if (!hubspotRecordUrl) return;
+  logCrOutboundRequest({
+    operation: "cr.metadata.updateField",
+    objectId,
+    contactId,
+    fieldId: HUBSPOT_LINK_TO_RT_RBT_FIELD_ID,
+    method: "PUT",
+    url: `${CR_BASE_URL}/contacts/${contactId}/metadata/${HUBSPOT_LINK_TO_RT_RBT_FIELD_ID}`,
+    payload: metadataPutBody(hubspotRecordUrl),
+  });
+  await requestWithRetry(
+    async () =>
+      axios.put(
+        `${CR_BASE_URL}/contacts/${contactId}/metadata/${HUBSPOT_LINK_TO_RT_RBT_FIELD_ID}`,
+        metadataPutBody(hubspotRecordUrl),
+        {
+          headers,
+          timeout: 30000,
+        }
+      ),
+    "cr.metadata.updateField",
+    { objectId: String(objectId), contactId: String(contactId), fieldId: HUBSPOT_LINK_TO_RT_RBT_FIELD_ID }
+  );
+}
+
 async function processOneRecord({
   objectId,
   objectTypeId,
@@ -819,6 +867,7 @@ async function processOneRecord({
   });
   const props = hsRecord?.properties || {};
   const now = new Date().toISOString();
+  const hubspotRecordUrl = buildHubspotRtRbtUrl(props?.hs_object_id || objectId, objectTypeId);
 
   const employeePayload = buildEmployeePayload({ objectId, properties: props });
   const btRbtType = normalizeBtRbtType(props?.bt_rbt_type);
@@ -996,6 +1045,16 @@ async function processOneRecord({
     });
   }
 
+  if (contactId && hubspotRecordUrl) {
+    await putHubspotRtRbtLinkMetadata({
+      headers,
+      contactId,
+      hubspotRecordUrl,
+      requestWithRetry,
+      objectId,
+    });
+  }
+
   if (contactId) {
     try {
       const labelSyncResult = await syncEmployeeLabels({
@@ -1030,6 +1089,7 @@ async function processOneRecord({
     updated_by_integration: true,
   };
   if (contactId) successProps.employee_id = String(contactId);
+  if (contactId) successProps.central_reach_link_to_rt_rbt = buildCentralReachContactUrl(contactId);
 
   await writebackHubspot({
     hubspotToken,
