@@ -26,6 +26,7 @@ const CR_META_FIELDS = {
   MALADAPTIVE_BEHAVIORS: 126207,
   COMORBID_DIAGNOSIS: 132303,
   BT_1_NAME: 131313,
+  BT_2_NAME: 138092,
   WORK_SCHEDULE_1: 132304,
   WORK_SCHEDULE_2: 138093,
   CLIENT_AVAILABILITY: 126209,
@@ -34,6 +35,7 @@ const CR_META_FIELDS = {
   AUTH_PERIOD: 134672,
   PHYSICIAN_CREDENTIALS: 131151,
   ASD_DIAGNOSIS_DATE: 131195,
+  ASD_DIAGNOSIS_DATE_SECONDARY: 138701,
   SUPERVISING_BCBA: 131308,
   INITIAL_ASSESSMENT_BCBA: 131314,
   SEVERITY_LEVEL: 133826,
@@ -454,6 +456,20 @@ function getAsdDiagnosisDateByInsuranceType(dealProps) {
   return null;
 }
 
+function getSecondaryAsdDiagnosisDateByInsuranceType(dealProps) {
+  const insuranceType = toTrimmedOrNull(dealProps.n2_what_type_of_insurance)?.toLowerCase();
+
+  if (insuranceType === "medicaid ffs") {
+    return toMetadataDate(dealProps.most_recent_asd_diagnosis_date_medicaid);
+  }
+
+  if (insuranceType === "commercial enrolled" || insuranceType === "commercial oon") {
+    return toMetadataDate(dealProps.most_recent_asd_diagnosis_date_2);
+  }
+
+  return null;
+}
+
 function getAuthPeriodValue(dealProps) {
   const start = toMetadataDate(dealProps.auth_start_date);
   const end = toMetadataDate(dealProps.auth_end_date);
@@ -468,6 +484,7 @@ function getExtendedMetadataValues(dealProps) {
     [CR_META_FIELDS.MALADAPTIVE_BEHAVIORS]: toTrimmedOrNull(dealProps.maladaptive_behaviors__clinical),
     [CR_META_FIELDS.COMORBID_DIAGNOSIS]: toTrimmedOrNull(dealProps.comorbid_diagnosis__clinical),
     [CR_META_FIELDS.BT_1_NAME]: toTrimmedOrNull(dealProps.current_primary_bt),
+    [CR_META_FIELDS.BT_2_NAME]: toTrimmedOrNull(dealProps.current_primary_bt_2),
     [CR_META_FIELDS.WORK_SCHEDULE_1]: toTrimmedOrNull(dealProps.bt_work_schedule_confirmed),
     [CR_META_FIELDS.WORK_SCHEDULE_2]: toTrimmedOrNull(dealProps.bt_work_schedule_2_confirmed),
     [CR_META_FIELDS.CLIENT_AVAILABILITY]: toTrimmedOrNull(dealProps.client_availability_completed),
@@ -476,6 +493,9 @@ function getExtendedMetadataValues(dealProps) {
     [CR_META_FIELDS.AUTH_PERIOD]: getAuthPeriodValue(dealProps),
     [CR_META_FIELDS.PHYSICIAN_CREDENTIALS]: getPhysicianCredentialsByInsuranceType(dealProps),
     [CR_META_FIELDS.ASD_DIAGNOSIS_DATE]: getAsdDiagnosisDateByInsuranceType(dealProps),
+    [CR_META_FIELDS.ASD_DIAGNOSIS_DATE_SECONDARY]: getSecondaryAsdDiagnosisDateByInsuranceType(
+      dealProps
+    ),
     [CR_META_FIELDS.SUPERVISING_BCBA]: toTrimmedOrNull(dealProps.supervising_bcba),
     [CR_META_FIELDS.INITIAL_ASSESSMENT_BCBA]: toTrimmedOrNull(dealProps.initial_assessment_bcba),
     [CR_META_FIELDS.SEVERITY_LEVEL]: toTrimmedOrNull(dealProps.severity_level_clinical),
@@ -1509,6 +1529,7 @@ async function upsertCrAndWriteback({
               "maladaptive_behaviors__clinical",
               "comorbid_diagnosis__clinical",
               "current_primary_bt",
+              "current_primary_bt_2",
               "bt_work_schedule_confirmed",
               "bt_work_schedule_2_confirmed",
               "client_availability_completed",
@@ -1522,6 +1543,7 @@ async function upsertCrAndWriteback({
               "npi_number__commercial",
               "most_recent_asd_diagnosis_date_medicaid",
               "most_recent_asd_diagnosis_date_1",
+              "most_recent_asd_diagnosis_date_2",
               "supervising_bcba",
               "initial_assessment_bcba",
               "policy_holder_name",
