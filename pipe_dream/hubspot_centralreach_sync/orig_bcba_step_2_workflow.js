@@ -5,15 +5,9 @@ const HUBSPOT_BASE_URL = "https://api.hubapi.com";
 const CR_TOKEN_URL = "https://login.centralreach.com/connect/token";
 const CR_BASE_URL = "https://partners-api.centralreach.com/enterprise/v1";
 const CR_ACCESS_TOKEN_KEY = "cr:access_token";
-const DEBUG_CONFIG = {
-  verbose: false,
-  fullPayload: false,
-};
 
 const HS_OBJECT_TYPE_ID_TEST = "2-55656302";
 // const HS_OBJECT_TYPE_ID_PROD = "2-48354212"; // PROD reference
-const HUBSPOT_PORTAL_ID_TEST = "50850427";
-// const HUBSPOT_PORTAL_ID_LIVE = "50317927";
 
 const HS_PROPERTIES = [
   "hs_object_id",
@@ -37,7 +31,6 @@ const HS_PROPERTIES = [
   "medicaid_id__ny",
   "medicaid_id__nj",
   "medicaid_id__co",
-  "credentialed_insurances__ny",
 ];
 
 const BCBA_METADATA_FIELD_IDS = {
@@ -45,24 +38,7 @@ const BCBA_METADATA_FIELD_IDS = {
   medicaid_id__ny: 126216,
   medicaid_id__nj: 138112,
   medicaid_id__co: 138113,
-  credentialed_with_medicaid_ny: 134444,
-  hubspot_link_to_bcba_record: 138703,
 };
-
-const CR_EMPLOYEE_LABELS = {
-  ALL_EMPLOYEES: 1052618,
-  BCBA: 1052629,
-  CLINICAL: 1052643,
-  NY_EMPLOYEE: 1107685,
-  CO_EMPLOYEE: 1107687,
-};
-
-const MANAGED_BCBA_LABEL_IDS = new Set([
-  CR_EMPLOYEE_LABELS.BCBA,
-  CR_EMPLOYEE_LABELS.NY_EMPLOYEE,
-  CR_EMPLOYEE_LABELS.CO_EMPLOYEE,
-  CR_EMPLOYEE_LABELS.CLINICAL,
-]);
 
 const BLOCKED_CREATE_MESSAGE =
   "PUT_ONLY_MODE enabled: create disabled until sandbox. Provide an existing employee_id or disable PUT_ONLY_MODE + enable ALLOW_EMPLOYEE_CREATE.";
@@ -106,11 +82,6 @@ function safeLog(message, meta = {}) {
   console.log(JSON.stringify({ message, timestamp: new Date().toISOString(), ...meta }));
 }
 
-function setDebugConfig({ verbose, fullPayload }) {
-  DEBUG_CONFIG.verbose = Boolean(verbose);
-  DEBUG_CONFIG.fullPayload = Boolean(fullPayload);
-}
-
 function safeString(value, max = 900) {
   if (value == null) return null;
   const s = typeof value === "string" ? value : JSON.stringify(value);
@@ -122,38 +93,6 @@ function redactPotentialPhi(str) {
   let out = str.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[REDACTED_EMAIL]");
   out = out.replace(/\b(\+?1[-.\s]?)?(\(?\d{3}\)?)[-.\s]?\d{3}[-.\s]?\d{4}\b/g, "[REDACTED_PHONE]");
   return out;
-}
-
-function sanitizeDebugValue(key, value) {
-  if (DEBUG_CONFIG.fullPayload) return value;
-  if (value == null) return value;
-
-  if (Array.isArray(value)) {
-    return value.map((item) => sanitizeDebugValue(key, item));
-  }
-
-  if (typeof value === "object") {
-    const out = {};
-    for (const [k, v] of Object.entries(value)) {
-      out[k] = sanitizeDebugValue(k, v);
-    }
-    return out;
-  }
-
-  const normalizedKey = String(key || "").toLowerCase();
-  const isSensitiveKey = /(name|email|address|street|city|postal|zip|phone|birth|dob)/.test(normalizedKey);
-  if (isSensitiveKey) return "[REDACTED]";
-
-  if (typeof value === "string") {
-    return redactPotentialPhi(safeString(value, 120));
-  }
-
-  return value;
-}
-
-function debugLog(message, meta = {}) {
-  if (!DEBUG_CONFIG.verbose) return;
-  safeLog(message, sanitizeDebugValue("meta", meta));
 }
 
 function toErrorMeta(error) {
@@ -262,17 +201,6 @@ function normalizeStateProvince(value) {
   return US_STATE_NAME_TO_CODE[normalizedName] || null;
 }
 
-function normalizeStateForEmployeeLabels(value) {
-  const s = String(value ?? "").trim();
-  if (!s) return null;
-  if (/^[A-Za-z]{2}$/.test(s)) return s.toUpperCase();
-
-  const upper = s.replace(/\./g, "").replace(/\s+/g, " ").toUpperCase();
-  if (upper === "NEW YORK") return "NY";
-  if (upper === "COLORADO") return "CO";
-  return null;
-}
-
 function normalizePhone(value) {
   const digits = String(value ?? "").replace(/\D+/g, "");
   if (digits.length === 11 && digits.startsWith("1")) return digits.slice(-10);
@@ -327,15 +255,7 @@ function buildBcbaMetadataPayload(properties) {
     medicaid_id__ny: trimOrNull(properties?.medicaid_id__ny),
     medicaid_id__nj: trimOrNull(properties?.medicaid_id__nj),
     medicaid_id__co: trimOrNull(properties?.medicaid_id__co),
-    credentialed_with_medicaid_ny: trimOrNull(properties?.credentialed_insurances__ny),
   };
-}
-
-function requiredBcbaLabelIds({ stateCode }) {
-  const labels = [CR_EMPLOYEE_LABELS.ALL_EMPLOYEES, CR_EMPLOYEE_LABELS.BCBA, CR_EMPLOYEE_LABELS.CLINICAL];
-  if (stateCode === "NY") labels.push(CR_EMPLOYEE_LABELS.NY_EMPLOYEE);
-  if (stateCode === "CO") labels.push(CR_EMPLOYEE_LABELS.CO_EMPLOYEE);
-  return labels;
 }
 
 function extractGenderDebug(properties) {
@@ -375,15 +295,11 @@ function hashPayload(value) {
 
 function isFreshEnough(properties) {
   const integrationLastWrite = properties?.integration_last_write;
-  if (!integrationLastWrite) return { eligible: true, reason: "missing_integration_last_write" };
-
+  if (!integrationLastWrite) return true;
   const hsLast = new Date(properties?.hs_lastmodifieddate).getTime();
-  if (!Number.isFinite(hsLast)) return { eligible: false, reason: "invalid_hs_lastmodifieddate" };
-
   const lastWrite = new Date(integrationLastWrite).getTime();
-  if (!Number.isFinite(lastWrite)) return { eligible: false, reason: "invalid_integration_last_write" };
-
-  return { eligible: hsLast > lastWrite, reason: hsLast > lastWrite ? "stale_integration" : "already_integrated" };
+  if (!Number.isFinite(hsLast) || !Number.isFinite(lastWrite)) return true;
+  return hsLast > lastWrite;
 }
 
 function truncateSafeErrorMessage(error) {
@@ -391,10 +307,18 @@ function truncateSafeErrorMessage(error) {
   return String(msg).slice(0, 500);
 }
 
-function getBcbaRecordIdsToSync(steps) {
-  const step1 = steps?.Intake_Poller?.$return_value;
-  const ids = step1?.bcbaRecordIdsToSync;
-  return Array.isArray(ids) ? ids.map(String) : [];
+function getObjectIdsToSync(steps) {
+  const stepEntries = Object.values(steps || {});
+  for (const entry of stepEntries) {
+    const candidate = entry?.$return_value;
+    if (Array.isArray(candidate?.recordIdsToSync)) {
+      return candidate.recordIdsToSync.map((v) => String(v));
+    }
+    if (Array.isArray(candidate?.objectIdsToSync)) {
+      return candidate.objectIdsToSync.map((v) => String(v));
+    }
+  }
+  return [];
 }
 
 function normalizeExistingEmployeeId(value) {
@@ -540,21 +464,8 @@ function metadataPutBody(value) {
   return { inputValue: String(value).trim() };
 }
 
-function buildHubspotBcbaUrl(hsObjectId, objectTypeId) {
-  const id = String(hsObjectId || "").trim();
-  const hsType = String(objectTypeId || "").trim();
-  if (!id || !hsType) return null;
-  return `https://app.hubspot.com/contacts/${HUBSPOT_PORTAL_ID_TEST}/record/${hsType}/${id}`;
-}
-
-function buildCentralReachContactUrl(contactId) {
-  const id = String(contactId || "").trim();
-  if (!id) return null;
-  return `https://members.centralreach.com/#contacts/details/?id=${id}`;
-}
-
 function logCrOutboundRequest({ operation, objectId, method, url, payload, contactId = null, fieldId = null }) {
-  debugLog("bcba_step2_cr_outbound_request", {
+  safeLog("bcba_step2_cr_outbound_request", {
     operation,
     objectId: String(objectId),
     ...(contactId ? { contactId: String(contactId) } : {}),
@@ -768,172 +679,6 @@ async function putBcbaMetadataFields({ headers, contactId, metadataValues, reque
     requestWithRetry,
     objectId,
   });
-  await putMetadataField({
-    headers,
-    contactId,
-    fieldId: BCBA_METADATA_FIELD_IDS.credentialed_with_medicaid_ny,
-    value: metadataValues.credentialed_with_medicaid_ny,
-    requestWithRetry,
-    objectId,
-  });
-  await putMetadataField({
-    headers,
-    contactId,
-    fieldId: BCBA_METADATA_FIELD_IDS.hubspot_link_to_bcba_record,
-    value: metadataValues.hubspot_link_to_bcba_record,
-    requestWithRetry,
-    objectId,
-  });
-}
-
-function extractLabelIdsFromResponse(data) {
-  const labels = Array.isArray(data?.labels) ? data.labels : [];
-  return labels.map((label) => Number(label?.labelId ?? label?.id ?? label)).filter((id) => Number.isFinite(id));
-}
-
-function mergeUniqueNumericIds(values) {
-  return Array.from(new Set(values.map((value) => Number(value)).filter((value) => Number.isFinite(value))));
-}
-
-function sameNumericIdSet(left, right) {
-  const a = mergeUniqueNumericIds(left).sort((x, y) => x - y);
-  const b = mergeUniqueNumericIds(right).sort((x, y) => x - y);
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i += 1) {
-    if (a[i] !== b[i]) return false;
-  }
-  return true;
-}
-
-async function getContactLabelIds({ headers, contactId, requestWithRetry, objectId }) {
-  const normalizedContactId = String(contactId);
-  logCrOutboundRequest({
-    operation: "cr.labels.list",
-    objectId,
-    contactId: normalizedContactId,
-    method: "GET",
-    url: `${CR_BASE_URL}/contacts/${normalizedContactId}/labels`,
-    payload: null,
-  });
-
-  const response = await requestWithRetry(
-    async () =>
-      axios.get(`${CR_BASE_URL}/contacts/${normalizedContactId}/labels`, {
-        headers,
-        timeout: 30000,
-      }),
-    "cr.labels.list",
-    { objectId: String(objectId), contactId: normalizedContactId },
-  );
-
-  return extractLabelIdsFromResponse(response?.data);
-}
-
-async function postContactLabels({ headers, contactId, labelIds, requestWithRetry, objectId }) {
-  const normalizedContactId = String(contactId);
-  const normalizedLabelIds = mergeUniqueNumericIds(labelIds);
-  if (!normalizedLabelIds.length) return { operation: "skip_empty" };
-
-  const primaryBody = { labels: normalizedLabelIds.map((labelId) => ({ labelId })) };
-  logCrOutboundRequest({
-    operation: "cr.labels.update",
-    objectId,
-    contactId: normalizedContactId,
-    method: "POST",
-    url: `${CR_BASE_URL}/contacts/${normalizedContactId}/labels`,
-    payload: primaryBody,
-  });
-
-  try {
-    await requestWithRetry(
-      async () =>
-        axios.post(`${CR_BASE_URL}/contacts/${normalizedContactId}/labels`, primaryBody, {
-          headers,
-          timeout: 30000,
-        }),
-      "cr.labels.update",
-      { objectId: String(objectId), contactId: normalizedContactId, labelCount: normalizedLabelIds.length },
-    );
-    return { operation: "updated", bodyShape: "labels[]" };
-  } catch (error) {
-    if (error?.response?.status !== 400) throw error;
-
-    const fallbackBody = { labelIds: normalizedLabelIds };
-    safeLog("bcba_labels_body_fallback", {
-      objectId: String(objectId),
-      contactId: normalizedContactId,
-      fromBodyShape: "labels[]",
-      toBodyShape: "labelIds[]",
-    });
-    logCrOutboundRequest({
-      operation: "cr.labels.update.fallback",
-      objectId,
-      contactId: normalizedContactId,
-      method: "POST",
-      url: `${CR_BASE_URL}/contacts/${normalizedContactId}/labels`,
-      payload: fallbackBody,
-    });
-    await requestWithRetry(
-      async () =>
-        axios.post(`${CR_BASE_URL}/contacts/${normalizedContactId}/labels`, fallbackBody, {
-          headers,
-          timeout: 30000,
-        }),
-      "cr.labels.update.fallback",
-      { objectId: String(objectId), contactId: normalizedContactId, labelCount: normalizedLabelIds.length },
-    );
-    return { operation: "updated", bodyShape: "labelIds[]" };
-  }
-}
-
-async function syncBcbaEmployeeLabels({ headers, contactId, stateCode, requestWithRetry, objectId }) {
-  const requiredLabelIds = requiredBcbaLabelIds({ stateCode });
-  const existingLabelIds = await getContactLabelIds({
-    headers,
-    contactId,
-    requestWithRetry,
-    objectId,
-  });
-
-  const existingUnmanaged = existingLabelIds.filter((id) => !MANAGED_BCBA_LABEL_IDS.has(Number(id)));
-  const desiredLabelIds = mergeUniqueNumericIds([...existingUnmanaged, ...requiredLabelIds]);
-
-  debugLog("bcba_label_decision_snapshot", {
-    objectId: String(objectId),
-    contactId: String(contactId),
-    stateCode,
-    requiredLabelIds,
-    existingLabelIds,
-    existingUnmanagedLabelIds: existingUnmanaged,
-    desiredLabelIds,
-  });
-
-  if (sameNumericIdSet(existingLabelIds, desiredLabelIds)) {
-    return {
-      operation: "noop",
-      stateCode,
-      requiredCount: requiredLabelIds.length,
-      existingCount: existingLabelIds.length,
-      desiredCount: desiredLabelIds.length,
-    };
-  }
-
-  const postResult = await postContactLabels({
-    headers,
-    contactId,
-    labelIds: desiredLabelIds,
-    requestWithRetry,
-    objectId,
-  });
-
-  return {
-    operation: postResult.operation,
-    bodyShape: postResult.bodyShape || null,
-    stateCode,
-    requiredCount: requiredLabelIds.length,
-    existingCount: existingLabelIds.length,
-    desiredCount: desiredLabelIds.length,
-  };
 }
 
 async function processOneRecord({
@@ -953,14 +698,9 @@ async function processOneRecord({
   });
   const props = hsRecord?.properties || {};
   const now = new Date().toISOString();
-  const stateCodeForLabels = normalizeStateForEmployeeLabels(props?.home_state);
-  const hubspotBcbaRecordUrl = buildHubspotBcbaUrl(props?.hs_object_id || objectId, objectTypeId);
 
   const employeePayload = buildEmployeePayload({ objectId, properties: props });
-  const metadataValues = {
-    ...buildBcbaMetadataPayload(props),
-    hubspot_link_to_bcba_record: hubspotBcbaRecordUrl,
-  };
+  const metadataValues = buildBcbaMetadataPayload(props);
   safeLog("bcba_gender_mapping_debug", {
     objectId: String(objectId),
     ...extractGenderDebug(props),
@@ -990,7 +730,7 @@ async function processOneRecord({
     employee: contactIdPayload || employeePayload,
     metadata: metadataValues,
   });
-  debugLog("bcba_payload_selected_for_cr", {
+  safeLog("bcba_payload_selected_for_cr", {
     objectId: String(objectId),
     hasContactId: Boolean(contactId),
     selectedPayload: contactIdPayload || employeePayload,
@@ -1004,14 +744,7 @@ async function processOneRecord({
     externalSystemId: employeePayload.externalSystemId,
   };
 
-  const freshnessGate = isFreshEnough(props);
-  if (!freshnessGate.eligible) {
-    debugLog("bcba_freshness_gate_noop", {
-      objectId: String(objectId),
-      reason: freshnessGate.reason,
-      hs_lastmodifieddate: props?.hs_lastmodifieddate || null,
-      integration_last_write: props?.integration_last_write || null,
-    });
+  if (!isFreshEnough(props)) {
     await writebackHubspot({
       hubspotToken,
       objectTypeId,
@@ -1021,6 +754,8 @@ async function processOneRecord({
         last_sync_status: "noop",
         last_sync_at: now,
         last_sync_error: "",
+        integration_last_write: now,
+        updated_by_integration: true,
       },
     });
     return { ...baseProcessed, operation: "noop", employee_id: normalizeExistingEmployeeId(props?.employee_id) };
@@ -1036,6 +771,8 @@ async function processOneRecord({
         last_sync_status: "noop",
         last_sync_at: now,
         last_sync_error: "",
+        integration_last_write: now,
+        updated_by_integration: true,
       },
     });
     return { ...baseProcessed, operation: "noop", employee_id: normalizeExistingEmployeeId(props?.employee_id) };
@@ -1107,19 +844,6 @@ async function processOneRecord({
   }
 
   if (contactId) {
-    const labelSyncResult = await syncBcbaEmployeeLabels({
-      headers,
-      contactId,
-      stateCode: stateCodeForLabels,
-      requestWithRetry,
-      objectId,
-    });
-    debugLog("bcba_label_sync_result", {
-      objectId: String(objectId),
-      contactId: String(contactId),
-      ...labelSyncResult,
-    });
-
     await putBcbaMetadataFields({
       headers,
       contactId,
@@ -1138,7 +862,6 @@ async function processOneRecord({
     updated_by_integration: true,
   };
   if (contactId) successProps.employee_id = String(contactId);
-  if (contactId) successProps.central_reach_record_link = buildCentralReachContactUrl(contactId);
 
   await writebackHubspot({
     hubspotToken,
@@ -1169,17 +892,10 @@ export default defineComponent({
     max_records_per_run: { type: "integer", default: 15 },
     ALLOW_EMPLOYEE_CREATE: { type: "boolean", default: false },
     PUT_ONLY_MODE: { type: "boolean", default: true },
-    debug_verbose_logs: { type: "boolean", default: false },
-    debug_full_payload_logs: { type: "boolean", default: false },
   },
 
   async run({ steps }) {
-    setDebugConfig({
-      verbose: this.debug_verbose_logs,
-      fullPayload: this.debug_full_payload_logs,
-    });
-
-    const objectIdsAll = getBcbaRecordIdsToSync(steps);
+    const objectIdsAll = getObjectIdsToSync(steps);
     const objectIds = objectIdsAll.slice(0, this.max_records_per_run);
 
     safeLog("bcba_step2_starting", {
@@ -1188,8 +904,6 @@ export default defineComponent({
       hubspotObjectTypeId: this.hubspot_object_type_id,
       allowEmployeeCreate: Boolean(this.ALLOW_EMPLOYEE_CREATE),
       putOnlyMode: Boolean(this.PUT_ONLY_MODE),
-      debugVerboseLogs: Boolean(this.debug_verbose_logs),
-      debugFullPayloadLogs: Boolean(this.debug_full_payload_logs),
     });
 
     if (!objectIds.length) {

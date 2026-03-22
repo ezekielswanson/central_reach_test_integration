@@ -1,0 +1,30 @@
+[2026-03-22T17:18:14.225Z] [INFO] Environment variables validated successfully
+[2026-03-22T17:18:14.229Z] [INFO] Script started | {"contactId":"4770887","outputBaseName":"all_labels_v2"}
+[2026-03-22T17:18:14.229Z] [INFO] Requesting access token | {"tokenUrl":"https://login.centralreach.com/connect/token"}
+[2026-03-22T17:18:14.448Z] [INFO] Access token received | {"tokenOrgId":"79f06ae1-46a5-4237-95cc-1be6fbc64f07"}
+[2026-03-22T17:18:14.448Z] [INFO] Fetching labels | {"contactId":"4770887","url":"https://partners-api.centralreach.com/enterprise/v1/contacts/4770887/labels"}
+[2026-03-22T17:18:14.694Z] [ERROR] Axios error while fetching labels | {"status":404,"message":"Requested record not found.","responseData":{"result":"OK","responseStatus":{"errorCode":"NotFound","message":"Requested record not found.","errors":[]},"failed":false,"cachedTime":0}}
+[2026-03-22T17:18:14.695Z] [INFO] Script terminated with failure
+[2026-03-22T17:22:39.877Z] [INFO] Environment variables validated successfully
+[2026-03-22T17:22:39.881Z] [INFO] Script started | {"contactId":"4770887","outputBaseName":"all_labels"}
+[2026-03-22T17:22:39.881Z] [INFO] Requesting access token | {"tokenUrl":"https://login.centralreach.com/connect/token"}
+[2026-03-22T17:22:40.109Z] [INFO] Access token received | {"tokenOrgId":"79f06ae1-46a5-4237-95cc-1be6fbc64f07"}
+[2026-03-22T17:22:40.110Z] [INFO] Fetching labels | {"contactId":"4770887","url":"https://partners-api.centralreach.com/enterprise/v1/contacts/4770887/labels"}
+[2026-03-22T17:22:40.359Z] [ERROR] Axios error while fetching labels | {"status":404,"message":"Requested record not found.","responseData":{"result":"OK","responseStatus":{"errorCode":"NotFound","message":"Requested record not found.","errors":[]},"failed":false,"cachedTime":0}}
+[2026-03-22T17:22:40.359Z] [INFO] Script terminated with failure
+[2026-03-22T17:24:45.155Z] [INFO] Environment variables validated successfully
+[2026-03-22T17:24:45.159Z] [INFO] Script started | {"contactId":"4778844","outputBaseName":"all_labels_control_4778844"}
+[2026-03-22T17:24:45.159Z] [INFO] Requesting access token | {"tokenUrl":"https://login.centralreach.com/connect/token"}
+[2026-03-22T17:24:45.367Z] [INFO] Access token received | {"tokenOrgId":"79f06ae1-46a5-4237-95cc-1be6fbc64f07"}
+[2026-03-22T17:24:45.367Z] [INFO] Fetching labels | {"contactId":"4778844","url":"https://partners-api.centralreach.com/enterprise/v1/contacts/4778844/labels"}
+[2026-03-22T17:24:45.585Z] [INFO] Labels request completed successfully | {"contactId":"4778844","status":200}
+[2026-03-22T17:24:45.585Z] [INFO] Output file written | {"outputPath":"/Users/zeke/Desktop/projects/client_projects/Optidge/central_reach_test_integration/output_files/all_labels_control_4778844.json"}
+[2026-03-22T17:24:45.585Z] [INFO] Script completed successfully | {"contactId":"4778844","outputBaseName":"all_labels_control_4778844"}
+[2026-03-22T17:47:50.979Z] [INFO] Environment variables validated successfully
+[2026-03-22T17:47:50.983Z] [INFO] Script started in orglabels mode | {"requestId":"4467195","outputBaseName":"all_labels_v2"}
+[2026-03-22T17:47:50.983Z] [INFO] Requesting access token | {"tokenUrl":"https://login.centralreach.com/connect/token"}
+[2026-03-22T17:47:51.206Z] [INFO] Access token received | {"tokenOrgId":"79f06ae1-46a5-4237-95cc-1be6fbc64f07"}
+[2026-03-22T17:47:51.207Z] [INFO] Fetching organization contact labels | {"requestId":"4467195","url":"https://partners-api.centralreach.com/enterprise/v1/contacts/labels"}
+[2026-03-22T17:47:51.469Z] [INFO] Organization labels request completed successfully | {"requestId":"4467195","status":200}
+[2026-03-22T17:47:51.471Z] [INFO] Output file written | {"outputPath":"/Users/zeke/Desktop/projects/client_projects/Optidge/central_reach_test_integration/output_files/all_labels_v2.json"}
+[2026-03-22T17:47:51.472Z] [INFO] Script completed successfully in orglabels mode | {"requestId":"4467195","outputBaseName":"all_labels_v2"}

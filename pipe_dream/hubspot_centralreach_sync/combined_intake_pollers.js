@@ -619,8 +619,7 @@ export default defineComponent({
       console.log(JSON.stringify({ message: "Combined poller section metrics", section: "deals", ...metricsBySection.deals }));
 
       // BCBA search + queue
-      // Temporarily disabled in v1 worker rollout to avoid BCBA HubSpot API calls.
-      /*
+      
       try {
         const bcbaSearchUrl = `${HUBSPOT_BASE_URL}/crm/v3/objects/${this.hs_bcba_object_type_id}/search`;
         const bcbaPayload = {
@@ -671,7 +670,7 @@ export default defineComponent({
           error,
         });
       }
-      */
+      
       console.log(JSON.stringify({ message: "Combined poller section metrics", section: "bcba", ...metricsBySection.bcba }));
 
       // BT/RBT search + queue

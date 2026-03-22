@@ -1,0 +1,547 @@
+{
+  "labels": [
+    {
+      "labelId": 1052527,
+      "name": "1) Candidate",
+      "parentLabelId": 1052526
+    },
+    {
+      "labelId": 1052528,
+      "name": "2) Interviewing",
+      "parentLabelId": 1052526
+    },
+    {
+      "labelId": 1052529,
+      "name": "3) Documentation",
+      "parentLabelId": 1052526
+    },
+    {
+      "labelId": 1052530,
+      "name": "4) Will not hire",
+      "parentLabelId": 1052526
+    },
+    {
+      "labelId": 1052651,
+      "name": "ABA",
+      "parentLabelId": 1052615
+    },
+    {
+      "labelId": 1052621,
+      "name": "Active Employee",
+      "parentLabelId": 1052541
+    },
+    {
+      "labelId": 1082208,
+      "name": "Additional hours available",
+      "parentLabelId": 1052614
+    },
+    {
+      "labelId": 1052549,
+      "name": "Admin",
+      "parentLabelId": 1052548
+    },
+    {
+      "labelId": 1107649,
+      "name": "Aetna",
+      "parentLabelId": 1052545
+    },
+    {
+      "labelId": 1082497,
+      "name": "Aetna NY",
+      "parentLabelId": 1052531
+    },
+    {
+      "labelId": 1052619,
+      "name": "All Clients",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052618,
+      "name": "All Employees",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052620,
+      "name": "Anthem BCBS",
+      "parentLabelId": 1052531
+    },
+    {
+      "labelId": 1052526,
+      "name": "Applicant Intake",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052632,
+      "name": "BCaBA",
+      "parentLabelId": 1052612
+    },
+    {
+      "labelId": 1052629,
+      "name": "BCBA",
+      "parentLabelId": 1052612
+    },
+    {
+      "labelId": 1108058,
+      "name": "BCBA Location",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052663,
+      "name": "BCBA Needed",
+      "parentLabelId": 1052649
+    },
+    {
+      "labelId": 1052630,
+      "name": "Behavior Technician NY",
+      "parentLabelId": 1052612
+    },
+    {
+      "labelId": 1052641,
+      "name": "Biller",
+      "parentLabelId": 1052613
+    },
+    {
+      "labelId": 1103437,
+      "name": "Billing Hold Medicaid affiliation",
+      "parentLabelId": 1052545
+    },
+    {
+      "labelId": 1108060,
+      "name": "Bronx BCBA",
+      "parentLabelId": 1108058
+    },
+    {
+      "labelId": 1107758,
+      "name": "Brooklyn BCBA",
+      "parentLabelId": 1108058
+    },
+    {
+      "labelId": 1107648,
+      "name": "Carelon ",
+      "parentLabelId": 1052545
+    },
+    {
+      "labelId": 1107650,
+      "name": "Cigna",
+      "parentLabelId": 1052545
+    },
+    {
+      "labelId": 1082498,
+      "name": "Cigna NY",
+      "parentLabelId": 1052531
+    },
+    {
+      "labelId": 1052616,
+      "name": "Client Service Location",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052615,
+      "name": "Client Service Type",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052614,
+      "name": "Client Status",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052655,
+      "name": "Clinic",
+      "parentLabelId": 1052616
+    },
+    {
+      "labelId": 1052643,
+      "name": "Clinical",
+      "parentLabelId": 1052613
+    },
+    {
+      "labelId": 1056433,
+      "name": "Clinical Director ",
+      "parentLabelId": 1052548
+    },
+    {
+      "labelId": 1109566,
+      "name": "Clinical Staff Performance ",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1109571,
+      "name": "CNA",
+      "parentLabelId": 1109566
+    },
+    {
+      "labelId": 1082500,
+      "name": "CO Client",
+      "parentLabelId": 1052616
+    },
+    {
+      "labelId": 1107687,
+      "name": "CO Employee",
+      "parentLabelId": 1108547
+    },
+    {
+      "labelId": 1107651,
+      "name": "CO Medicaid",
+      "parentLabelId": 1103437
+    },
+    {
+      "labelId": 1052544,
+      "name": "Contractor",
+      "parentLabelId": 1052541
+    },
+    {
+      "labelId": 1052635,
+      "name": "COTA",
+      "parentLabelId": 1052612
+    },
+    {
+      "labelId": 1052612,
+      "name": "Credentials",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052613,
+      "name": "Departments",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052647,
+      "name": "Discharged (Insurance no longer in effect. Goals m",
+      "parentLabelId": 1052614
+    },
+    {
+      "labelId": 1109569,
+      "name": "FNSNC",
+      "parentLabelId": 1109566
+    },
+    {
+      "labelId": 1052542,
+      "name": "Full time",
+      "parentLabelId": 1052541
+    },
+    {
+      "labelId": 1052531,
+      "name": "Funding Source ",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052533,
+      "name": "GHI",
+      "parentLabelId": 1052531
+    },
+    {
+      "labelId": 1092164,
+      "name": "GRAD Student BCBA",
+      "parentLabelId": 1052612
+    },
+    {
+      "labelId": 1052656,
+      "name": "Home",
+      "parentLabelId": 1052616
+    },
+    {
+      "labelId": 1052642,
+      "name": "Human Resources",
+      "parentLabelId": 1052613
+    },
+    {
+      "labelId": 1052546,
+      "name": "In training",
+      "parentLabelId": 1052545
+    },
+    {
+      "labelId": 1052624,
+      "name": "In-Training",
+      "parentLabelId": 1052541
+    },
+    {
+      "labelId": 1052622,
+      "name": "Inactive Employee",
+      "parentLabelId": 1052541
+    },
+    {
+      "labelId": 1052648,
+      "name": "Ineligible",
+      "parentLabelId": 1052614
+    },
+    {
+      "labelId": 1052541,
+      "name": "Initial Assessment Availability",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1082207,
+      "name": "Initial Assessment Completed",
+      "parentLabelId": 1052614
+    },
+    {
+      "labelId": 1082206,
+      "name": "Initial Assessment In Progress",
+      "parentLabelId": 1052614
+    },
+    {
+      "labelId": 1052661,
+      "name": "Insurance not accepted",
+      "parentLabelId": 1052648
+    },
+    {
+      "labelId": 1052548,
+      "name": "Job Title",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1108700,
+      "name": "Learning Tree Reviews ",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1107761,
+      "name": "Long Island ",
+      "parentLabelId": 1108058
+    },
+    {
+      "labelId": 1108059,
+      "name": "Long Island BCBA",
+      "parentLabelId": 1108058
+    },
+    {
+      "labelId": 1107760,
+      "name": "Manhattan BCBA",
+      "parentLabelId": 1108058
+    },
+    {
+      "labelId": 1052532,
+      "name": "Medicaid NY",
+      "parentLabelId": 1052531
+    },
+    {
+      "labelId": 1109568,
+      "name": "ND",
+      "parentLabelId": 1109566
+    },
+    {
+      "labelId": 1052547,
+      "name": "Needs credentialing",
+      "parentLabelId": 1052545
+    },
+    {
+      "labelId": 1052545,
+      "name": "New Employee On-boarding",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1108106,
+      "name": "NJ BCBA",
+      "parentLabelId": 1108058
+    },
+    {
+      "labelId": 1082501,
+      "name": "NJ Client",
+      "parentLabelId": 1052616
+    },
+    {
+      "labelId": 1107686,
+      "name": "NJ Employee",
+      "parentLabelId": 1108547
+    },
+    {
+      "labelId": 1052662,
+      "name": "No ABA Benefits",
+      "parentLabelId": 1052648
+    },
+    {
+      "labelId": 1109570,
+      "name": "NR",
+      "parentLabelId": 1109566
+    },
+    {
+      "labelId": 1082499,
+      "name": "NY Client",
+      "parentLabelId": 1052616
+    },
+    {
+      "labelId": 1107685,
+      "name": "NY Employee",
+      "parentLabelId": 1108547
+    },
+    {
+      "labelId": 1107647,
+      "name": "NY Medicaid",
+      "parentLabelId": 1052545
+    },
+    {
+      "labelId": 1052650,
+      "name": "On Hold",
+      "parentLabelId": 1052614
+    },
+    {
+      "labelId": 1052646,
+      "name": "Ongoing Services Provided",
+      "parentLabelId": 1052614
+    },
+    {
+      "labelId": 1052660,
+      "name": "Out of Area",
+      "parentLabelId": 1052648
+    },
+    {
+      "labelId": 1052543,
+      "name": "Part time",
+      "parentLabelId": 1052541
+    },
+    {
+      "labelId": 1052626,
+      "name": "Part-time",
+      "parentLabelId": 1052541
+    },
+    {
+      "labelId": 1052627,
+      "name": "Payor Credentialed",
+      "parentLabelId": 1052541
+    },
+    {
+      "labelId": 1052657,
+      "name": "Pending Authorization",
+      "parentLabelId": 1052645
+    },
+    {
+      "labelId": 1052658,
+      "name": "Pending Initial Assessment",
+      "parentLabelId": 1052645
+    },
+    {
+      "labelId": 1052659,
+      "name": "Pending Ongoing Services",
+      "parentLabelId": 1052645
+    },
+    {
+      "labelId": 1052645,
+      "name": "Pending Services",
+      "parentLabelId": 1052614
+    },
+    {
+      "labelId": 1052628,
+      "name": "Prospective Employee",
+      "parentLabelId": 1052541
+    },
+    {
+      "labelId": 1108547,
+      "name": "Provider State Location",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052638,
+      "name": "PTA",
+      "parentLabelId": 1052612
+    },
+    {
+      "labelId": 1052644,
+      "name": "Public Submission",
+      "parentLabelId": 1052614
+    },
+    {
+      "labelId": 1110810,
+      "name": "Quarter 1 Review 2026",
+      "parentLabelId": 1108700
+    },
+    {
+      "labelId": 1108702,
+      "name": "Quarter 2 Review 2026",
+      "parentLabelId": 1108700
+    },
+    {
+      "labelId": 1108704,
+      "name": "Quarter 3 Review 2026",
+      "parentLabelId": 1108700
+    },
+    {
+      "labelId": 1108705,
+      "name": "Quarter 4 Review 2026",
+      "parentLabelId": 1108700
+    },
+    {
+      "labelId": 1107757,
+      "name": "Queens BCBA",
+      "parentLabelId": 1108058
+    },
+    {
+      "labelId": 1107692,
+      "name": "RBT CO",
+      "parentLabelId": 1052612
+    },
+    {
+      "labelId": 1052631,
+      "name": "RBT NY",
+      "parentLabelId": 1052612
+    },
+    {
+      "labelId": 1056413,
+      "name": "Referral Source ",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052617,
+      "name": "Referring Provider",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1108061,
+      "name": "Remote BCBA",
+      "parentLabelId": 1108058
+    },
+    {
+      "labelId": 1052640,
+      "name": "Scheduler",
+      "parentLabelId": 1052613
+    },
+    {
+      "labelId": 1052688,
+      "name": "School",
+      "parentLabelId": 1052616
+    },
+    {
+      "labelId": 1052654,
+      "name": "Social Skills Group",
+      "parentLabelId": 1052615
+    },
+    {
+      "labelId": 1052665,
+      "name": "Space Limited",
+      "parentLabelId": 1052649
+    },
+    {
+      "labelId": 1052664,
+      "name": "Tech Needed",
+      "parentLabelId": 1052649
+    },
+    {
+      "labelId": 1052625,
+      "name": "Terminated",
+      "parentLabelId": 1052541
+    },
+    {
+      "labelId": 1052623,
+      "name": "Trained",
+      "parentLabelId": 1052541
+    },
+    {
+      "labelId": 1052534,
+      "name": "UHC",
+      "parentLabelId": 1052531
+    },
+    {
+      "labelId": 1052649,
+      "name": "Waitlist",
+      "parentLabelId": 1052614
+    },
+    {
+      "labelId": 1107759,
+      "name": "Yonkers BCBA",
+      "parentLabelId": 1108058
+    }
+  ],
+  "result": "OK",
+  "failed": false,
+  "cachedTime": 1774201671524
+}

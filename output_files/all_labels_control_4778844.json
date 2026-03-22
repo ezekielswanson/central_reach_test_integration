@@ -1,0 +1,22 @@
+{
+  "labels": [
+    {
+      "labelId": 1052619,
+      "name": "All Clients",
+      "parentLabelId": 0
+    },
+    {
+      "labelId": 1052644,
+      "name": "Public Submission",
+      "parentLabelId": 1052614
+    },
+    {
+      "labelId": 1082500,
+      "name": "CO Client",
+      "parentLabelId": 1052616
+    }
+  ],
+  "result": "OK",
+  "failed": false,
+  "cachedTime": 1774200285638
+}
