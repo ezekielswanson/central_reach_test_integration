@@ -1,0 +1,25 @@
+
+address
+bcba_name
+central_reach_record_link
+city_work
+credentialed_insurances__ny
+date_of_birth
+email
+employee_id
+employee_phone
+home_apt
+home_state
+hs_lastmodifieddate
+hs_object_id
+integration_last_write
+last_sync_at
+last_sync_error
+last_sync_hash
+last_sync_status
+medicaid_id__co
+medicaid_id__nj
+medicaid_id__ny
+updated_by_integration
+work_email
+Note: extractGenderDebug only scans existing HubSpot keys with /gender/i for logging; there is no fixed gender property name in this file. hubspot_link_to_bcba_record is used as a Central Reach metadata label in metadataValues, not as a HubSpot CRM property write.

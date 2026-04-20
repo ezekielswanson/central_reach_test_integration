@@ -1,0 +1,27 @@
+bt_name
+bt_rbt_type
+central_reach_link_to_rt_rbt
+city__work_
+date_of_birth
+email
+employee_id
+employee_phone
+gender
+home_apt
+hs_lastmodifieddate
+hs_object_id
+integration_last_write
+last_sync_at
+last_sync_error
+last_sync_hash
+last_sync_status
+location_city
+location_home
+postal_code__work_
+postal_code_home
+state__work_
+street_address__work_
+street_home
+updated_by_integration
+
+Note: postal_code appears only in HS_PROPERTIES and is not read or written elsewhere in this file, so it is omitted.
